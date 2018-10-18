@@ -1,0 +1,31 @@
+module analysis/types
+
+signature
+  sorts
+    Type
+
+  constructors
+    //Simple types
+    BooleanType    : Type
+    PositiveNrType : Type
+    NaturalNrType  : Type
+    IntegerType    : Type
+    RealType       : Type
+    
+    //Complex types
+    ListType     : Type -> Type
+    SetType      : Type -> Type
+    BagType      : Type -> Type
+    StructType   : scope -> Type
+    FunctionType : list(Type) * Type -> Type
+    
+    //Named type
+    SortType : string * scope -> Type
+    
+    //Actions
+    ActionType : Type
+    
+    //Any type
+    AnyType : Type
+
+rules

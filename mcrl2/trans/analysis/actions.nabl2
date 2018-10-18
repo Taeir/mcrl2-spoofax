@@ -1,0 +1,62 @@
+module analysis/actions
+
+signature
+  namespaces
+    Action
+
+//Action declarations
+rules
+  [[ ActionDecl(names) ^ (s) ]] :=
+    Map1(Action) [[ names ^ (s) ]].
+  
+  [[ ActionDeclExt(names, sexps) ^ (s) ]] :=
+    Map1T [[ sexps ^ (s) : argTys ]],
+    Map1t(ActionT) [[ names ^ (s) : funTy ]],
+    funTy == FunctionType(argTys, ActionType()).
+  
+  Action [[ name ^ (s) ]] :=
+    Action{name} <- s,
+    Action{name} : ActionType() !!.
+  
+  ActionT [[ name ^ (s) : actionTy ]] :=
+    Action{name} <- s,
+    Action{name} : actionTy !!.
+
+//Action references
+rules
+  [[ NoArgsActionRef(ActionRef(name)) ^ (s) ]] :=
+    Action{name} -> s,
+    Action{name} |-> actionDef | error $[Unable to find action [name]],
+    Action{name} : actionTy,
+    actionTy == ActionType() | error $[Action arguments do not match. Expected: [actionTy]. Given: No arguments].
+  
+  [[ ActionRefExt(ActionRef(name), args) ^ (s) ]] :=
+    Map1T [[ args ^ (s) : argTys ]],
+    Action{name} -> s,
+    Action{name} |-> actionDef | error $[Unable to find action [name]],
+    Action{name} : actionTy,
+    actionTy == FunctionType(argTys, ActionType()) | error $[Arguments do not match. Expected: [actionTy]. Given: [argTys]].
+
+  //The action reference from another context is the one that does not use any arguments.
+  [[ ActionRef(name) ^ (s) ]] :=
+    Action{name} -> s,
+    Action{name} |-> actionDef | error $[Unable to find action [name]].
+
+//Multi actions
+rules
+  [[ MultActLabel(actionRefs) ^ (s) ]] :=
+    Map1 [[ actionRefs ^ (s) ]].
+
+//Action renaming
+rules
+  [[ ActionRenaming(actionRef, name) ^ (s) ]] :=
+    //TODO rename to action ref?
+    [[ actionRef ^ (s) ]].
+
+//Communication
+rules
+  [[ ActionSynchronization(actionRef1, multAct, actionRef2) ^ (s) ]] :=
+    [[ actionRef1 ^ (s) ]],
+    [[ multAct ^ (s) ]],
+    [[ actionRef2 ^ (s) ]].
+    

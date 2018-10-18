@@ -1,0 +1,8 @@
+module MCRL2
+
+menus
+  
+  menu: "mCRL2" (openeditor)
+    
+    action: "Show graph"      = show-graph (source)
+    action: "Run Tests"       = run-tests (source)

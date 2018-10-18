@@ -1,0 +1,100 @@
+module desugar
+
+imports
+  signatures/sort-sig
+  signatures/process-sig
+  signatures/data-sig
+
+signature
+  sorts
+    ProcBinOp
+    DataBinOp
+    DataUnOp
+    
+  constructors
+    ProcBinExp : ProcBinOp * ProcExp * ProcExp -> ProcExp
+    DataBinExp : DataBinOp * DataExp * DataExp -> DataExp
+    DataUnExp  : DataUnOp * DataExp -> DataExp
+    
+    Choice    : ProcBinOp
+    Parallel  : ProcBinOp
+    LeftMerge : ProcBinOp
+    Until     : ProcBinOp
+    Seq       : ProcBinOp
+    At        : ProcBinOp
+    CommMerge : ProcBinOp
+    
+    //Data
+    Negate : DataUnOp
+    Minus  : DataUnOp
+    Size   : DataUnOp
+    
+    Implication   : DataBinOp
+    Conjunction   : DataBinOp
+    Disjunction   : DataBinOp
+    
+    Equality      : DataBinOp
+    InEquality    : DataBinOp
+    Smaller       : DataBinOp
+    SmallerEqual  : DataBinOp
+    Larger        : DataBinOp
+    LargerEqual   : DataBinOp
+    
+    Membership    : DataBinOp
+    ListCons      : DataBinOp
+    ListSnoc      : DataBinOp
+    ListConcat    : DataBinOp
+    ListElementAt : DataBinOp
+    
+    Add      : DataBinOp
+    Subtract : DataBinOp
+    Divide   : DataBinOp
+    IntDiv   : DataBinOp
+    IntMod   : DataBinOp
+    Mult     : DataBinOp
+    
+    Where : DataBinOp
+
+strategies
+  desugar-all = topdown(try(desugar))
+
+rules
+  desugar: Choice(e1, e2)    -> ProcBinExp(Choice(), e1, e2)
+  desugar: Parallel(e1, e2)  -> ProcBinExp(Parallel(), e1, e2)
+  desugar: LeftMerge(e1, e2) -> ProcBinExp(LeftMerge(), e1, e2)
+  desugar: Until(e1, e2)     -> ProcBinExp(Until(), e1, e2)
+  desugar: Seq(e1, e2)       -> ProcBinExp(Seq(), e1, e2)
+  desugar: At(e1, e2)        -> ProcBinExp(At(), e1, e2)
+  desugar: CommMerge(e1, e2) -> ProcBinExp(CommMerge(), e1, e2)
+  
+  //Data experssions
+  desugar: Negate(e) -> DataUnExp(Negate(), e)
+  desugar: Minus(e)  -> DataUnExp(Minus(), e)
+  desugar: Size(e)   -> DataUnExp(Size(), e)
+  
+  desugar: Implication(e1, e2)   -> DataBinExp(Implication(), e1, e2)
+  desugar: Conjunction(e1, e2)   -> DataBinExp(Conjunction(), e1, e2)
+  desugar: Disjunction(e1, e2)   -> DataBinExp(Disjunction(), e1, e2)
+
+  desugar: Equality(e1, e2)      -> DataBinExp(Equality(), e1, e2)
+  desugar: InEquality(e1, e2)    -> DataBinExp(InEquality(), e1, e2)
+  desugar: Smaller(e1, e2)       -> DataBinExp(Smaller(), e1, e2)
+  desugar: SmallerEqual(e1, e2)  -> DataBinExp(SmallerEqual(), e1, e2)
+  desugar: Larger(e1, e2)        -> DataBinExp(Larger(), e1, e2)
+  desugar: LargerEqual(e1, e2)   -> DataBinExp(LargerEqual(), e1, e2)
+
+  desugar: Membership(e1, e2)    -> DataBinExp(Membership(), e1, e2)
+  desugar: ListCons(e1, e2)      -> DataBinExp(ListCons(), e1, e2)
+  desugar: ListSnoc(e1, e2)      -> DataBinExp(ListSnoc(), e1, e2)
+  desugar: ListConcat(e1, e2)    -> DataBinExp(ListConcat(), e1, e2)
+  desugar: ListElementAt(e1, e2) -> DataBinExp(ListElementAt(), e1, e2)
+
+  desugar: Add(e1, e2)      -> DataBinExp(Add(), e1, e2)
+  desugar: Subtract(e1, e2) -> DataBinExp(Subtract(), e1, e2)
+  desugar: Divide(e1, e2)   -> DataBinExp(Divide(), e1, e2)
+  desugar: IntDiv(e1, e2)   -> DataBinExp(IntDiv(), e1, e2)
+  desugar: IntMod(e1, e2)   -> DataBinExp(IntMod(), e1, e2)
+  desugar: Mult(e1, e2)     -> DataBinExp(Mult(), e1, e2)
+
+  desugar: Where(e1, e2) -> DataBinExp(Where(), e1, e2)
+  

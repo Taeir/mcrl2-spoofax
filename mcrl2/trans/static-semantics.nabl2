@@ -1,0 +1,64 @@
+module static-semantics
+
+imports
+
+  signatures/-
+  analysis/actions
+  analysis/constructors
+  analysis/data
+  analysis/equations
+  analysis/globalvars
+  analysis/maps
+  analysis/processes
+  analysis/sorts
+  analysis/types
+  analysis/vars
+  desugar
+
+signature
+  name resolution
+    labels
+      P I
+
+    order
+      D < P,
+      D < I,
+      I < P
+
+    well-formedness
+      P* I*
+  
+  relations
+    reflexive, transitive, anti-symmetric sub : Type * Type {
+      FunctionType(-sub, +sub),
+      [+sub],
+      ListType(+sub),
+      SetType(+sub),
+      BagType(+sub)
+    }
+
+rules
+
+  init ^ (programScope) :=
+    new programScope,
+    PositiveNrType() <sub! NaturalNrType(),
+    NaturalNrType() <sub! IntegerType(),
+    IntegerType() <sub! RealType(),
+    RealType() <sub! AnyType()
+    .
+
+  [[ Program(sections) ^ (programScope) ]] := Map1 [[ sections ^ (programScope) ]].
+  
+  [[ SortSection(sorts)       ^ (s) ]] := Map1 [[ sorts ^ (s) ]].
+  [[ EquationsSection(eqns)   ^ (s) ]] := Map1 [[ eqns  ^ (s) ]].
+  [[ ActionSection(acts)      ^ (s) ]] := Map1 [[ acts  ^ (s) ]].
+  [[ ProcessSection(procs)    ^ (s) ]] := Map1 [[ procs ^ (s) ]].
+  
+  [[ MapSection(maps)         ^ (s) ]] := Map1(Maps)         [[ maps ^ (s) ]].
+  [[ ConstructorSection(cons) ^ (s) ]] := Map1(Constructors) [[ cons ^ (s) ]].
+  
+  [[ VarSection(VarsDeclList(vars))        ^ (s) ]] := Map1(Vars)       [[ vars ^ (s) ]].
+  [[ GlobalVarsSection(VarsDeclList(vars)) ^ (s) ]] := Map1(GlobalVars) [[ vars ^ (s) ]].
+  
+  [[ InitSection(procExp)     ^ (s) ]] := [[ procExp ^ (s) ]].
+  

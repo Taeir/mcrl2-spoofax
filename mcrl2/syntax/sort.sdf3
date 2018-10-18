@@ -1,0 +1,52 @@
+module sort
+
+imports
+  mcrl2common
+
+context-free start-symbols
+  SimpleSortExp
+  SortExp
+  SortDecl
+
+template options
+  keyword -/- [a-zA-Z0-9\_]
+  tokenize: "(,;#:?"
+  
+context-free syntax
+  SimpleSortExp.Boolean    = <Bool>
+  SimpleSortExp.PositiveNr = <Pos>
+  SimpleSortExp.NaturalNr  = <Nat>
+  SimpleSortExp.Integer    = <Int>
+  SimpleSortExp.Real       = <Real>
+  SimpleSortExp.SList      = <List(<SortExp>)>
+  SimpleSortExp.SSet       = <Set(<SortExp>)>
+  SimpleSortExp.SBag       = <Bag(<SortExp>)>
+  SimpleSortExp            = <<SortRef>>
+  SimpleSortExp.SortExp    = <(<SortExp>)>
+  SimpleSortExp.Struct     = <struct <{ConstrDecl " | "}+>>
+  
+  //For the colorer
+  SortRef.SortRef          = <<ID>>
+  
+  SortExp                  = SimpleSortExp
+  SortExp.FunctionSort     = [[{SimpleSortExp "#"}+] -> [SortExp]] 
+  
+  //Declaration of a sort
+  SortDecl.SortDecls = <<{SortDeclID ", "}+>;>
+  SortDecl.SortAlias = <<ID> = <SortExp>;>
+  
+  SortDeclID.SortDeclID = <<ID>>
+  
+  //Constructors
+  ConstrDecl.ConstrDecl = <<ID> <ConstrArgs> <ConstrFunction>>
+  ConstrArgs.Args   = <(<{ProjDecl ", "}+>)>
+  ConstrArgs.NoArgs = <>
+  ConstrFunction.ConstrFunction   = <?<ID>>
+  ConstrFunction.NoConstrFunction = <>
+  
+  ProjDecl.ProjDecl      = <<SortExp>>
+  ProjDecl.ProjDeclNamed = <<ID>: <SortExp>>
+  
+context-free restrictions
+  
+  

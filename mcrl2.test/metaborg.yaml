@@ -1,0 +1,9 @@
+---
+id: nl.taico:mcrl2.test:0.1.0-SNAPSHOT
+name: mcrl2
+dependencies:
+  compile:
+  - nl.taico:mcrl2:0.1.0-SNAPSHOT
+  - org.metaborg:org.metaborg.meta.lang.spt:${metaborgVersion}
+build:
+  useBuildSystemSpec: true

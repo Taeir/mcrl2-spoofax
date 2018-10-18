@@ -1,0 +1,275 @@
+module analysis2/mcrl2
+
+signature
+
+  sorts ID = string
+  
+  //---------------------------------------------------------------------------
+  //Program and sections
+  sorts Program constructors
+    Program : list(Section) -> Program
+  
+  sorts Section constructors
+//    ProcessSection     : list(ProcessDecl) -> Section
+    ActionSection      : list(ActionDecl) -> Section
+//    InitSection        : ProcExp -> Section
+    SortSection        : list(SortDecl) -> Section
+    ConstructorSection : list(IdsDecl) -> Section
+    MapSection         : list(IdsDecl) -> Section
+//    GlobalVarsSection  : list(VarsDeclList) -> Section
+//    VarSection         : list(VarsDeclList) -> Section
+    EquationsSection   : list(EqnDecl) -> Section
+  
+  sorts IdsDecl constructors
+    TypedParams : list(ID) * SortExp -> IdsDecl
+  
+  //---------------------------------------------------------------------------
+  //Actions
+  sorts ActionDecl constructors
+    ActionDecl    : list(ID) -> ActionDecl
+    ActionDeclExt : list(ID) * list(SortExp) -> ActionDecl
+  
+  sorts ActionRef constructors
+    ActionRef : ID -> ActionRef
+  
+  //---------------------------------------------------------------------------
+  //Data
+  sorts DataExp constructors
+    //TODO
+  
+  //---------------------------------------------------------------------------
+  //Equations
+  sorts EqnDecl constructors
+    EqnDecl            : DataExp * DataExp -> EqnDecl
+    EqnDeclConditioned : DataExp * DataExp * DataExp -> EqnDecl
+  
+  //---------------------------------------------------------------------------
+  //Sorts
+  sorts SortDecl constructors
+    SortDecls : list(SortDeclID) -> SortDecl
+    SortAlias : ID * SortExp     -> SortDecl
+  
+  sorts SortDeclID constructors
+    SortDeclID   : ID       -> SortDeclID
+  
+  sorts SortExp constructors
+    Boolean      : SortExp
+    PositiveNr   : SortExp
+    NaturalNr    : SortExp
+    Integer      : SortExp
+    Real         : SortExp
+    SList        : SortExp -> SortExp
+    SSet         : SortExp -> SortExp
+    SBag         : SortExp -> SortExp
+    SortRef      : ID -> SortExp
+    FunctionSort : list(SortExp) * SortExp -> SortExp
+    Struct       : list(ConstrDecl) -> SortExp
+  
+//  sorts SortRef constructors
+//    SortRef : ID -> SortRef
+  
+  sorts ConstrDecl constructors
+    ConstrDecl : ID * ConstrArgs * ConstrFunction -> ConstrDecl
+  
+  sorts ConstrArgs constructors
+    Args   : list(ProjDecl) -> ConstrArgs
+    NoArgs : ConstrArgs
+  
+  sorts ConstrFunction constructors
+    ConstrFunction   : ID -> ConstrFunction
+    NoConstrFunction : ConstrFunction
+  
+  sorts ProjDecl constructors
+    ProjDecl      : SortExp      -> ProjDecl
+    ProjDeclNamed : ID * SortExp -> ProjDecl
+
+  //---------------------------------------------------------------------------
+  //Types
+  sorts Type constructors
+    BoolType   : Type
+    
+    PosType    : Type
+    NatType    : Type
+    IntType    : Type
+    RealType   : Type
+    
+    ListType   : Type -> Type
+    SetType    : Type -> Type
+    BagType    : Type -> Type
+    
+    StructType : scope -> Type
+    FunctionType : list(Type) * Type -> Type
+    
+    SortType   : string -> Type
+    
+    ActionType : Type
+    
+    AnyType    : Type
+  
+  //---------------------------------------------------------------------------
+  relations
+    typeOfDecl : occurrence -> Type
+  
+  namespaces
+    Var    : string
+    Action : string
+    Sort   : string
+    StructConstructor : string
+    Function : string
+    
+  name-resolution
+    labels P
+    
+    resolve Action   filter lexicalPathMatch min lexicalPathOrd
+    resolve Sort     filter lexicalPathMatch min lexicalPathOrd
+    resolve Var      filter lexicalPathMatch min lexicalPathOrd
+    resolve Function filter lexicalPathMatch min lexicalPathOrd
+    resolve StructConstructor filter lexicalPathMatch min lexicalPathOrd
+
+rules
+  lexicalPathMatch : list(label)
+  lexicalPathOrd   : label * label
+
+  lexicalPathMatch(p)    :- pathMatch[P*](p).
+  lexicalPathOrd(p1, p2) :- pathLt[$ < P](p1, p2).
+
+//-----------------------------------------------------------------------------
+//Program
+rules
+  programOK : Program
+  programOK(Program(sections)) :- {s}
+    new s,
+    sectionsOK(s, sections).
+
+//Sections
+rules
+  sectionOK : scope * Section
+  sectionsOK maps sectionOK(*, list(*))
+  
+  sectionOK(s, ActionSection(actionDecls)) :-
+    actionDeclsOK(s, actionDecls).
+  
+  sectionOK(s, SortSection(sortDecls)) :-
+    sortDeclsOK(s, sortDecls).
+
+//-----------------------------------------------------------------------------
+//Actions
+rules
+  actionOK     : scope * string * Type
+  actionDeclOK : scope * ActionDecl
+  actionDeclsOK     maps actionDeclOK(*, list(*))
+  actionDeclNamesOK maps actionOK(*, list(*), *)
+  
+  actionDeclOK(s, ActionDecl(names)) :-
+    actionDeclNamesOK(s, names, ActionType()).
+  
+  actionDeclOK(s, ActionDeclExt(names, args)) :- {argTypes}
+    typeOfSortExps(s, args) == argTypes,
+    actionDeclNamesOK(s, names, FunctionType(argTypes, ActionType())).
+
+  //Action declaration
+  actionOK(s, name, t) :-
+    s -> Action{name@name} with typeOfDecl t.
+
+//-----------------------------------------------------------------------------
+//Sorts
+rules
+  sortOK     : scope * SortDeclID
+  sortDeclOK : scope * SortDecl
+  sortDeclsOK maps sortDeclOK(*, list(*))
+  sortDeclNamesOK maps sortOK(*, list(*))
+  
+  sortDeclOK(s, SortDecls(names)) :-
+    sortDeclNamesOK(s, names).
+  
+  sortDeclOK(s, SortAlias(name, sexp)) :- {T}
+    typeOfSortExp(s, sexp) == T,
+    s -> Sort{name@name} with typeOfDecl T.
+  
+  sortOK(s, SortDeclID(name)) :- 
+    s -> Sort{name@name} with typeOfDecl SortType(name).
+
+rules
+  
+
+rules
+  
+  typeOfSortExp : scope * SortExp -> Type
+  typeOfSortExps maps typeOfSortExp(*, list(*)) = list(*)
+  
+  //Simple types
+  typeOfSortExp(s, Boolean())    = BoolType().
+  
+  //Numbers
+  typeOfSortExp(s, PositiveNr()) = PosType().
+  typeOfSortExp(s, NaturalNr())  = NatType().
+  typeOfSortExp(s, Integer())    = IntType().
+  typeOfSortExp(s, Real())       = RealType().
+  
+  //Collections
+  typeOfSortExp(s, SList(sexp)) = L :- {T}
+    typeOfSortExp(s, sexp) == T,
+    ListType(T) == L.
+  typeOfSortExp(s, SBag(sexp)) = L :- {T}
+    typeOfSortExp(s, sexp) == T,
+    BagType(T) == L.
+  typeOfSortExp(s, SSet(sexp)) = L :- {T}
+    typeOfSortExp(s, sexp) == T,
+    SetType(T) == L.
+  
+  //References
+  typeOfSortExp(s, SortRef(name)) = T :-
+    query typeOfDecl filter lexicalPathMatch and { Sort{name'@_} :- name' == name }
+          in s |-> [(_, (_, T))].
+  
+  //Functions
+  typeOfSortExp(s, FunctionSort(args, sexp)) = T :- {argTypes retType}
+    typeOfSortExps(s, args) == argTypes,
+    typeOfSortExp(s, sexp) == retType,
+    T == FunctionType(argTypes, retType).
+  
+  //Struct
+  typeOfSortExp(s, Struct(constrs)) = T :- {struct_scope}
+    new struct_scope,
+    resolveConstructors(s, struct_scope, constrs).
+  
+  //Struct constructors
+  resolveConstructor : scope * scope * ConstrDecl
+  resolveConstructors maps resolveConstructor(*, *, list(*))
+  
+  resolveConstructor(s, struct_scope, ConstrDecl(name, NoArgs(), NoConstrFunction())) :- {d_constructor T}
+    d_constructor == StructConstructor{name@name},
+    T == StructType(struct_scope),
+    struct_scope -> d_constructor with typeOfDecl T,
+    s            -> d_constructor with typeOfDecl T.
+  
+  resolveConstructor(s, struct_scope, ConstrDecl(name, NoArgs(), ConstrFunction(funName))) :- {d_constructor T}
+    d_constructor == StructConstructor{name@name},
+    T == StructType(struct_scope),
+    struct_scope -> d_constructor with typeOfDecl T,
+    s            -> d_constructor with typeOfDecl T,
+    s -> Function{funName@funName} with typeOfDecl FunctionType([T], BoolType()).
+    
+  resolveConstructor(s, struct_scope, ConstrDecl(name, Args(args), NoConstrFunction())) :- {d_constructor T argTypes}
+    d_constructor == StructConstructor{name@name},
+    typeOfProjDecls(s, args) == argTypes,
+    T == StructType(struct_scope),
+    struct_scope -> d_constructor with typeOfDecl T,
+    s            -> d_constructor with typeOfDecl T.
+  
+  resolveConstructor(s, struct_scope, ConstrDecl(name, Args(args), ConstrFunction(funName))) :- {d_constructor T}
+    d_constructor == StructConstructor{name@name},
+    T == StructType(struct_scope),
+    struct_scope -> d_constructor with typeOfDecl T,
+    s            -> d_constructor with typeOfDecl T,
+    s -> Function{funName@funName} with typeOfDecl FunctionType([T], BoolType()).
+  
+  typeOfProjDecl : scope * ProjDecl -> Type
+  typeOfProjDecls maps typeOfProjDecl(*, list(*)) = list(*)
+  
+  typeOfProjDecl(s, ProjDecl(sexp)) = T :-
+    typeOfSortExp(s, sexp) == T.
+  typeOfProjDecl(s, ProjDeclNamed(_, sexp)) = T :-
+    //TODO Use the name somewhere or at least store it (as a relation on the type)
+    typeOfSortExp(s, sexp) == T.
+ 

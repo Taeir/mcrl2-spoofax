@@ -1,0 +1,23 @@
+module communication
+
+imports
+  action
+  mcrl2common
+
+context-free syntax
+  ActIdSet.ActionSet = <{<{ActionRef ", "}+>}>
+  
+  //Multi action labels
+  MultActId.MultActLabel       = <<{ActionRef " | "}+>>
+  MultActIdList.MultActLblList = <<{MultActId ", "}+>>
+  MultActIdSet.MultActLblSet   = <{ <{MultActId ", "}*> }>
+  
+  //Communicating
+  CommExp.ActionSynchronization = [[ActionRef] | [MultActId] -> [ActionRef]]
+  CommExpList.CommExpList       = <<{CommExp ", "}+>>
+  CommExpSet.CommExpSet         = <{ <{CommExp ", "}*> }>
+  
+  //Renaming
+  RenExp.ActionRenaming = [[ActionRef] -> [ID]]
+  RenExpList.RenExpList = <<{RenExp ", "}+>>
+  RenExpSet.RenExpSet   = <{ <{RenExp ", "}*> }>

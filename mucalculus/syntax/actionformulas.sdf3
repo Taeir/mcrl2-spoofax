@@ -1,0 +1,43 @@
+module actionformulas
+
+imports
+	data
+	multiactions
+
+template options
+	keyword -/- [a-zA-Z0-9]
+	tokenize: "(.!"
+
+context-free start-symbols
+	ActionFormula
+
+context-free syntax
+	DataValExp.DataValExp = <val(<DataExp>)>
+	
+	ActionFormula.DataExp = <<DataValExp>> {left}
+	ActionFormula.Multi = <<McfMultAct>>
+	ActionFormula = <(<ActionFormula>)> {bracket}
+	
+	ActionFormula.True    = <true>
+	ActionFormula.False   = <false>
+	ActionFormula.Forall  = <forall <VarsDeclList> . <ActionFormula>>
+	ActionFormula.Exists  = <exists <VarsDeclList> . <ActionFormula>>
+	ActionFormula.Implies = [[ActionFormula] => [ActionFormula]] {right}
+	ActionFormula.Or      = <<ActionFormula> || <ActionFormula>> {right}
+	ActionFormula.And     = <<ActionFormula> && <ActionFormula>> {right}
+	ActionFormula.Time    = <<ActionFormula> @ <DataExp>> {left}
+	ActionFormula.Not     = <!<ActionFormula>>
+	
+context-free priorities
+	ActionFormula.DataExp > //20
+	ActionFormula.Multi > //10
+	
+	ActionFormula.Not > //6
+	ActionFormula.Time > //5
+	ActionFormula.And > //4
+	ActionFormula.Or > //3
+	ActionFormula.Implies > //2
+	{right:
+		ActionFormula.Forall
+		ActionFormula.Exists} //0
+	

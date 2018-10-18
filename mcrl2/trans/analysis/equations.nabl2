@@ -1,0 +1,19 @@
+module analysis/equations
+
+signature
+  namespaces
+
+rules
+  [[ EqnDecl(dexp1, dexp2) ^ (s) ]] :=
+    [[ dexp1 ^ (s) : dExp1Ty ]],
+    [[ dexp2 ^ (s) : dExp2Ty ]],
+    dExp2Ty <sub? dExp1Ty | error $[Type of the LHS does not match the type of the RHS. Expected [dExp1Ty]. Actual [dExp2Ty]].
+    
+  [[ EqnDeclConditioned(condition, dexp1, dexp2) ^ (s) ]] :=
+    [[ condition ^ (s) : BooleanType() ]],
+    [[ dexp1 ^ (s) : dExp1Ty ]],
+    [[ dexp2 ^ (s) : dExp2Ty  ]],
+    dExp2Ty <sub? dExp1Ty | error $[Type of the LHS does not match the type of the RHS. Expected [dExp1Ty]. Actual [dExp2Ty]].
+  
+  
+    

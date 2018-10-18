@@ -1,0 +1,14 @@
+module analysis/constructors
+
+signature
+  namespaces
+    Constructor
+
+rules
+  Constructors [[ TypedParams(names, sexp) ^ (s) ]] :=
+    [[ sexp ^ (s) : constructorTy ]],
+    Map1T(Constructor) [[ names ^ (s) : constructorTy ]].
+  
+  Constructor [[ name ^ (s) : constructorTy ]] :=
+    Constructor{name} <- s,
+    Constructor{name} : constructorTy !!.

@@ -1,0 +1,14 @@
+module Main
+
+imports
+
+  Syntax
+  Menus
+//  Analysis
+
+language
+
+  extensions : mcf
+
+  provider : target/metaborg/stratego.ctree
+  provider : target/metaborg/stratego-javastrat.jar

@@ -1,0 +1,21 @@
+module Colorer
+
+imports
+//  libspoofax/color/default
+  libspoofax/color/colors
+  completion/colorer/mucalculus-cc-esv
+  
+colorer
+  sortref = 0 60 220 italic
+  dataref = 175 0 0
+  actionref = 140 0 175
+
+  SortRef  : sortref
+  DataRef  : dataref
+  Action   : actionref
+  
+  keyword : 127 0 85 bold
+  number  : 0 128 0
+  layout  : 63 127 95 italic
+  identifier : _
+  operator : 0 0 128

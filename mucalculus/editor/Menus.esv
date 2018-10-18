@@ -1,0 +1,8 @@
+module Menus
+
+menus
+  
+  menu: "Verify" (openeditor)
+    
+    action: "Run Test"                   = run-test (source)
+    action: "Test and Generate Evidence" = run-test-evidence (source)

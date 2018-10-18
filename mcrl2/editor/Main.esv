@@ -1,0 +1,14 @@
+module Main
+
+imports
+
+  Syntax
+  Analysis2
+  Menus
+
+language
+
+  extensions : mcrl2
+
+  provider : target/metaborg/stratego.ctree
+  provider : target/metaborg/stratego-javastrat.jar

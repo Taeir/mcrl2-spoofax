@@ -1,0 +1,10 @@
+module regularformulas
+language mucalculus
+
+start symbol RegularFormula
+
+test reg: Simple star [[ true* ]] parse to Star(ActionFormula(True()))
+test reg: Simple plus [[ true+ ]] parse to Plus(ActionFormula(True()))
+test reg: Simple dot [[ true.false ]] parse to Concatenation(ActionFormula(True()), ActionFormula(False()))
+test reg: Complex dot [[ true*.true ]] parse to Concatenation(Star(ActionFormula(True())),ActionFormula(True()))
+test reg: Complex dot 2 [[ true+.true ]] parse to Concatenation(Plus(ActionFormula(True())),ActionFormula(True()))

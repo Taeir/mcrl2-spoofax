@@ -1,0 +1,162 @@
+module analysis/data
+
+rules
+  [[ DataRef(name) ^ (s) : refTy ]] :=
+    Var{name} -> s,
+    Var{name} |-> varRef | error $[Unable to find [name]],
+    varRef : refTy.
+  
+  //Simple
+  [[ Number(_) ^ (s) : NaturalNrType() ]].
+  [[ True()    ^ (s) : BooleanType() ]].
+  [[ False()   ^ (s) : BooleanType() ]].
+  
+  [[ EmptyList() ^ (s) : ListType(AnyType()) ]].
+  [[ EmptySet()  ^ (s) : SetType(AnyType())  ]].
+  [[ EmptyBag()  ^ (s) : BagType(AnyType())  ]].
+  
+  //Collections
+  [[ List(dexps) ^ (s) : ListType(dexpsTy) ]] :=
+    Map1t [[ dexps ^ (s) : dexpsTy ]],
+    ListType(dexpsTy) <sub! AnyType().
+  
+  [[ Set(dexps) ^ (s) : SetType(dexpsTy)   ]] :=
+    Map1t [[ dexps ^ (s) : dexpsTy ]],
+    SetType(dexpsTy) <sub! AnyType().
+  
+  [[ Bag(bagEnumElements) ^ (s) : BagType(elementsTy)   ]] :=
+    Map1t [[ bagEnumElements ^ (s) : elementsTy ]],
+    BagType(elementsTy) <sub! AnyType().
+  
+  [[ BagElement(dexp1, dexp2) ^ (s) : bagElementTy ]] :=
+    [[ dexp1 ^ (s) : dexp1Ty ]],
+    [[ dexp2 ^ (s) : bagElementTy ]].
+  
+  //	Set comprehension: denotes the set of elements a in S for which b(a) is true.
+  [[ SetBag(VarDecl(name, sexp), dexp) ^ (s) : setBagTy ]] :=
+    //TODO I don't understand what this should be, or how it works. The below is just a guess.
+    [[ sexp ^ (s) : varTy ]],
+    [[ dexp ^ (bagScope) : dexpTy ]], 
+    new bagScope,
+    bagScope -P-> s,
+    Var{name} <- bagScope,
+    Var{name} : varTy !!.
+  
+  //Function
+  [[ FunctionUpdate(de1, de2, de3) ^ (s) : funUpTy ]] :=
+    [[ de1 ^ (s) : funUpTy ]],
+    funUpTy == FunctionType([de2Ty], de3Ty),
+    [[ de2 ^ (s) : de2Ty ]],
+    [[ de3 ^ (s) : de3Ty ]].
+
+  [[ FunctionApp(dfun, dargs) ^ (s) : funAppTy ]] :=
+    [[ dfun ^ (s) : dFunTy ]],
+    Map1T [[ dargs ^ (s) : dArgTys ]],
+    dFunTy == FunctionType(expectedArgTys, funAppTy) | error $[Expected a function, but was [dFunTy]]@dfun,
+    expectedArgTys <sub? dArgTys | error $[Invalid argument types. Expected [expectedArgTys]. Actual [dArgTys]].
+  
+  //Unary expressions
+  [[ DataUnExp(Negate(), de) ^ (s) : BooleanType() ]] :=
+    [[ de ^ (s) : BooleanType() ]].
+  
+  [[ DataUnExp(Minus(), de) ^ (s) : minusTy ]] :=
+    [[ de ^ (s) : deTy ]],
+    minusTy is sub.lub of (IntegerType(), deTy).
+    //TODO Set complement
+  
+  [[ DataUnExp(Size(), de) ^ (s) : NaturalNrType() ]] :=
+    [[ de ^ (s) : deTy ]],
+    deTy == ListType(_).
+  
+  //Binary expressions: Booleans
+  [[ e@ DataBinExp(Implication(), _, _) ^ (s) : ty ]] := BoolBinExp [[ e ^ (s) : ty ]].
+  [[ e@ DataBinExp(Conjunction(), _, _) ^ (s) : ty ]] := BoolBinExp [[ e ^ (s) : ty ]].
+  [[ e@ DataBinExp(Disjunction(), _, _) ^ (s) : ty ]] := BoolBinExp [[ e ^ (s) : ty ]].
+  
+  BoolBinExp [[ DataBinExp(_, de1, de2) ^ (s) : BooleanType() ]] :=
+    [[ de1 ^ (s) : BooleanType() ]],
+    [[ de2 ^ (s) : BooleanType() ]].
+  
+  //Binary expressions: Equality
+  [[ e@ DataBinExp(Equality(),     _, _) ^ (s) : ty ]] := EqualityExp [[ e ^ (s) : ty ]].
+  [[ e@ DataBinExp(InEquality(),   _, _) ^ (s) : ty ]] := EqualityExp [[ e ^ (s) : ty ]].
+  [[ e@ DataBinExp(Smaller(),      _, _) ^ (s) : ty ]] := EqualityExp [[ e ^ (s) : ty ]].
+  [[ e@ DataBinExp(SmallerEqual(), _, _) ^ (s) : ty ]] := EqualityExp [[ e ^ (s) : ty ]].
+  [[ e@ DataBinExp(Larger(),       _, _) ^ (s) : ty ]] := EqualityExp [[ e ^ (s) : ty ]].
+  [[ e@ DataBinExp(LargerEqual(),  _, _) ^ (s) : ty ]] := EqualityExp [[ e ^ (s) : ty ]].
+  
+  EqualityExp [[ DataBinExp(_, de1, de2) ^ (s) : BooleanType() ]] :=
+    [[ de1 ^ (s) : equality1Ty ]],
+    [[ de2 ^ (s) : equality2Ty ]],
+    equality1Ty <sub? equality2Ty | error $[Cannot compare unequal types].
+  
+  //Binary Expressions: Lists
+  [[ DataBinExp(Membership(), delem, dlist) ^ (s) : BooleanType() ]] :=
+    [[ delem ^ (s) : elemTy ]],
+    [[ dlist ^ (s) : listTy ]],
+    listTy == ListType(baseTy) | error $[You can only use "in" on lists (not on [listTy])]@dlist,
+    elemTy <sub? baseTy | error $[The type of the given element does not match the type of other elements in the list.].
+    
+  [[ DataBinExp(ListCons(), delem, dlist) ^ (s) : listTy ]] :=
+    [[ delem ^ (s) : elemTy ]],
+    [[ dlist ^ (s) : listTy ]],
+    listTy == ListType(baseTy) | error $[You can only use "|>" on lists (not on [listTy])]@dlist,
+    elemTy <sub? baseTy | error $[The type of the given element does not match the type of other elements in the list.].
+  
+  [[ DataBinExp(ListCons(), dlist, delem) ^ (s) : listTy ]] :=
+    [[ delem ^ (s) : elemTy ]],
+    [[ dlist ^ (s) : listTy ]],
+    listTy == ListType(baseTy) | error $[You can only use "<|" on lists (not on [listTy])]@dlist,
+    elemTy <sub? baseTy | error $[The type of the given element does not match the type of other elements in the list.].
+  
+  [[ DataBinExp(ListConcat(), dlist1, dlist2) ^ (s) : list1Ty ]] :=
+    [[ dlist1 ^ (s) : list1Ty ]],
+    [[ dlist2 ^ (s) : list2Ty ]],
+    list1Ty == ListType(base1Ty) | error $[You can only use "++" on lists (not on [list1Ty])],
+    list2Ty == ListType(base2Ty) | error $[You can only use "++" on lists (not on [list1Ty])],
+    
+    base1Ty <sub? base2Ty           | error $[The type of the two lists must be the same (left: [base1Ty], right: [base2Ty])].
+  
+  [[ DataBinExp(ListElementAt(), dlist, dindex) ^ (s) : baseTy ]] :=
+    [[ dindex ^ (s) : indexTy ]],
+    [[ dlist ^ (s) : listTy ]],
+    indexTy <sub? NaturalNrType() | error $[The index must be a natural number (was: [indexTy])]@dindex,
+    listTy == ListType(baseTy) | error $[You can only use "." on lists (not on [listTy])]@dlist.
+  
+  
+  //Binary expressions: Numeric
+  //TODO Some of these are also used for set logic
+  //TODO Add, Subtract
+  
+  [[ DataBinExp(Mult(), de1, de2) ^ (s) : multTy ]] :=
+    //TODO Also used for set logic
+    [[ de1 ^ (s) : de1Ty ]],
+    [[ de2 ^ (s) : de2Ty ]],
+    de1Ty <sub? RealType() | error $[The left expression must be a number]@de1,
+    de2Ty <sub? RealType() | error $[The right expression must be a number]@de2,
+    multTy is sub.lub of (de1Ty, de2Ty) | error $[Expected two numbers].
+  
+  [[ DataBinExp(Divide(), de1, de2) ^ (s) : RealType() ]] :=
+    [[ de1 ^ (s) : de1Ty ]],
+    [[ de2 ^ (s) : de2Ty ]],
+    de1Ty <sub? RealType() | error $[The left expression must be a number]@de1,
+    de2Ty <sub? RealType() | error $[The right expression must be a number]@de2.
+  
+  [[ DataBinExp(IntDiv(), de1, de2) ^ (s) : divideTy ]] :=
+    [[ de1 ^ (s) : de1Ty ]],
+    [[ de2 ^ (s) : PositiveNrType() ]],
+    de1Ty != RealType() | error $[The first argument must be an integer number when using integer division.]@de1,
+    divideTy is sub.lub of (de1Ty, NaturalNrType()) | error $[First argument must be a number].
+  
+  [[ DataBinExp(IntMod(), de1, de2) ^ (s) : NaturalNrType() ]] :=
+    [[ de1 ^ (s) : de1Ty ]],
+    [[ de2 ^ (s) : PositiveNrType() ]],
+    de1Ty != RealType() | error $[The first argument must be an integer number when using integer division.]@de1,
+    divideTy is sub.lub of (de1Ty, IntegerType()) | error $[First argument must be a number].
+  
+  
+  //Other
+  [[ Bracket(dexp) ^ (s) : ty ]] := [[ dexp ^ (s) : ty ]].
+  
+  //TODO Forall, exists, lambda
+  //TODO Where

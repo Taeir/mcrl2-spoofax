@@ -1,0 +1,7 @@
+module test
+
+language mucalculus
+
+test parse [[
+
+]] parse succeeds

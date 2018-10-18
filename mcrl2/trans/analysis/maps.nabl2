@@ -1,0 +1,17 @@
+module analysis/maps
+
+signature
+  namespaces
+    Map
+
+rules
+  Maps [[ TypedParams(names, sexp) ^ (s) ]] :=
+    [[ sexp ^ (s) : mapTy ]],
+    Map1t(Map) [[ names ^ (s) : mapTy ]].
+  
+  Map [[ name ^ (s) : mapTy ]] :=
+    Map{name} <- s,
+    Var{name} <- s,
+    Map{name} : mapTy !!,
+    Var{name} : mapTy !!,
+    Var{name}.origin := MapVar().

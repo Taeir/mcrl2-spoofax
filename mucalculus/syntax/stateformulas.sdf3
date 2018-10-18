@@ -1,0 +1,59 @@
+module stateformulas
+
+imports
+	mcrl2common
+	data
+	sort
+	actionformulas
+	regularformulas
+
+template options
+	keyword -/- [a-zA-Z0-9]
+	tokenize: "[.@"
+
+context-free start-symbols
+	StateFormula
+
+context-free syntax
+	StateFormula.DataExp = <<DataValExp>> {left}
+	StateFormula = <(<StateFormula>)> {bracket}
+	
+	StateFormula.True        = <true>
+	StateFormula.False       = <false>
+	StateFormula.MinFixpoint = <mu <StateVarDecl>.<StateFormula>> {right}
+	StateFormula.MaxFixpoint = <nu <StateVarDecl>.<StateFormula>> {right}
+	StateFormula.Forall      = <forall <VarsDeclList>.<StateFormula>> {right}
+	StateFormula.Exists      = <exists <VarsDeclList>.<StateFormula>> {right}
+	StateFormula.Implication = [[StateFormula] => [StateFormula]] {right}
+	StateFormula.Disjunction = <<StateFormula> || <StateFormula>> {right}
+	StateFormula.Conjunction = <<StateFormula> && <StateFormula>> {right}
+	StateFormula.Box         = <[<RegularFormula>]<StateFormula>> {right}
+	StateFormula.Diamond     = [<[RegularFormula]>[StateFormula]] {right}
+	StateFormula.Negation    = <!<StateFormula>> {right}
+	StateFormula.PBESVar     = <<ID>>
+	StateFormula.PBESVar     = <<ID>(<{DataExp ", "}+>)>
+	StateFormula.Delay       = <delay>
+	StateFormula.Delay       = <delay@<DataExp>>
+	StateFormula.Yaled       = <yaled>
+	StateFormula.Yaled       = <yaled@<DataExp>>
+	
+	StateVarDecl.PBESVarDecl = <<ID>>
+	StateVarDecl.PBESVarDecl = <<ID>(<{StateVarAssignment ", "}+>)>
+	StateVarAssignment.StateVarAssignment = <<ID>:<SortExp> = <DataExp>>
+	
+context-free priorities
+	StateFormula.DataExp >
+	StateFormula.Negation >
+	{right:
+		StateFormula.Box
+		StateFormula.Diamond} >
+	StateFormula.Conjunction >
+	StateFormula.Disjunction >
+	StateFormula.Implication >
+	{right:
+		StateFormula.Forall
+		StateFormula.Exists} >
+	{right:
+		StateFormula.MinFixpoint
+		StateFormula.MaxFixpoint}
+	

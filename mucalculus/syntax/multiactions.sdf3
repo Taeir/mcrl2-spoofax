@@ -1,0 +1,10 @@
+module multiactions
+
+imports
+	action
+	mcrl2common
+
+context-free syntax
+	McfMultAct.Tau = <tau>
+	McfMultAct.ActionList = <<{Action " | "}+>>
+	

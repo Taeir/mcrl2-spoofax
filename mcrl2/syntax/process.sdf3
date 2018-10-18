@@ -1,0 +1,90 @@
+module process
+
+imports
+  mcrl2common
+  action
+  communication
+  data
+
+context-free start-symbols
+  ProcessDecl
+  ProcExp
+  ProcExpNoIf
+
+context-free syntax
+  ProcessDecl.ProcessDecl    = <<ID> = <ProcExp>;>
+  ProcessDecl.ProcessDeclExt = <<ID>(<{VarsDecl ", "}+>) = <ProcExp>;>
+
+context-free syntax
+  ProcRef.ProcRef = <<ID>>
+
+  ProcExp           = <(<ProcExp>)> {bracket}
+  ProcExp = Action
+  ProcExp.ProcessAssignment = <<ProcRef>(<{Assignment ", "}*>)>
+  ProcExp.Delta     = <delta>
+  ProcExp.Tau       = <tau>
+  ProcExp.Block     = <block ( <ActIdSet>, <ProcExp> )>
+  ProcExp.Allow     = <allow ( <MultActIdSet>, <ProcExp> )>
+  ProcExp.Hide      = <hide ( <ActIdSet>, <ProcExp> )>
+  ProcExp.Rename    = <rename ( <RenExpSet>, <ProcExp> )>
+  ProcExp.Comm      = <comm ( <CommExpSet>, <ProcExp> )>
+  ProcExp.Choice    = <<ProcExp> + <ProcExp>> {left}
+  ProcExp.Sum       = <sum <{VarsDecl ", "}+> . <ProcExp>> {right}
+  ProcExp.Parallel  = <<ProcExp> || <ProcExp>> {right}
+  ProcExp.LeftMerge = <<ProcExp> ||_ <ProcExp>> {right}
+  ProcExp.If        = [[DataExpUnit] -> [ProcExp]] {right}
+  ProcExp.IfElse    = <<DataExpUnit> <IfThen> <ProcExp>> {right}
+  ProcExp.Until     = [[ProcExp] << [ProcExp]] {left}
+  ProcExp.Seq       = <<ProcExp> . <ProcExp>> {right}
+  ProcExp.At        = <<ProcExp> @ <ProcExp>> {left}
+  ProcExp.CommMerge = <<ProcExp> | <ProcExp>> {left}
+  
+context-free priorities
+  ProcExp.CommMerge >	//9
+  ProcExp.At >			//8
+  ProcExp.Seq >			//7
+  ProcExp.Until >		//6
+  {right: 				//5 //TODO Is this left?
+    ProcExp.IfElse
+    ProcExp.If} >
+  ProcExp.LeftMerge >	//4
+  ProcExp.Parallel >	//3
+  ProcExp.Sum >			//2
+  ProcExp.Choice >		//1
+  IfThen.IfThen			//0
+
+context-free syntax
+  ProcExpNoIf           = <(<ProcExpNoIf>)> {bracket}
+  ProcExpNoIf = Action
+  ProcExpNoIf.ProcessAssignment = <<ProcRef>(<{Assignment ", "}*>)>
+  ProcExpNoIf.Delta     = <delta>
+  ProcExpNoIf.Tau       = <tau>
+  ProcExpNoIf.Block     = <block ( <ActIdSet>, <ProcExpNoIf> )>
+  ProcExpNoIf.Allow     = <allow ( <MultActIdSet>, <ProcExpNoIf> )>
+  ProcExpNoIf.Hide      = <hide ( <ActIdSet>, <ProcExpNoIf> )>
+  ProcExpNoIf.Rename    = <rename ( <RenExpSet>, <ProcExpNoIf> )>
+  ProcExpNoIf.Comm      = <comm ( <CommExpSet>, <ProcExpNoIf> )>
+  ProcExpNoIf.Choice    = <<ProcExpNoIf> + <ProcExpNoIf>> {left}
+  ProcExpNoIf.Sum       = <sum <{VarsDecl ", "}+> . <ProcExpNoIf>> {right}
+  ProcExpNoIf.Parallel  = <<ProcExpNoIf> || <ProcExpNoIf>> {right}
+  ProcExpNoIf.LeftMerge = <<ProcExpNoIf> ||_ <ProcExpNoIf>> {right}
+  ProcExpNoIf.Until     = [[ProcExpNoIf] << [ProcExpNoIf]] {left}
+  ProcExpNoIf.Seq       = <<ProcExpNoIf> . <ProcExpNoIf>> {right}
+  ProcExpNoIf.At        = <<ProcExpNoIf> @ <ProcExpNoIf>> {left}
+  ProcExpNoIf.CommMerge = <<ProcExpNoIf> | <ProcExpNoIf>> {left}
+
+context-free priorities
+  ProcExpNoIf.CommMerge >	//8
+  ProcExpNoIf.At >			//7
+  ProcExpNoIf.Seq >			//6
+  ProcExpNoIf.Until >		//5
+  ProcExpNoIf.LeftMerge >	//4
+  ProcExpNoIf.Parallel >	//3
+  ProcExpNoIf.Sum >			//2
+  ProcExpNoIf.Choice		//1
+
+context-free syntax
+
+  IfThen.IfThen = [-> [ProcExpNoIf] <>;] {left}
+  
+  

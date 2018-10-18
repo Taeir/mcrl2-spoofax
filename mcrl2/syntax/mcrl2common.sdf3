@@ -1,0 +1,82 @@
+module mcrl2common
+
+lexical syntax
+
+  ID             = [a-zA-Z\_] [a-zA-Z0-9\_\']* 
+  INT            = "0" | ("-"? [1-9][0-9]*) 
+  STRING         = "\"" StringChar* "\"" 
+  StringChar     = ~[\"\n] 
+  StringChar     = "\\\"" 
+  StringChar     = BackSlashChar 
+  BackSlashChar  = "\\" 
+  LAYOUT         = [\ \t\n\r] 
+  CommentChar    = [\*] 
+  LAYOUT         = "/*" InsideComment* "*/" 
+  InsideComment  = ~[\*] 
+  InsideComment  = CommentChar 
+  LAYOUT         = "%" ~[\n\r]* NewLineEOF 
+  NewLineEOF     = [\n\r] 
+  NewLineEOF     = EOF 
+  EOF            =  
+  
+  //Keywords
+  ID = "sort" {reject}
+  ID = "cons" {reject}
+  ID = "map" {reject}
+  ID = "var" {reject}
+  ID = "eqn" {reject}
+  ID = "act" {reject}
+  ID = "proc" {reject}
+  ID = "init" {reject}
+  ID = "nil" {reject}
+  ID = "delta" {reject}
+  ID = "tau" {reject}
+  ID = "sum" {reject}
+  ID = "block" {reject}
+  ID = "allow" {reject}
+  ID = "hide" {reject}
+  ID = "rename" {reject}
+  ID = "comm" {reject}
+  ID = "struct" {reject}
+  ID = "Bool" {reject}
+  ID = "Pos" {reject}
+  ID = "Nat" {reject}
+  ID = "Int" {reject}
+  ID = "Real" {reject}
+  ID = "List" {reject}
+  ID = "Set" {reject}
+  ID = "Bag" {reject}
+  ID = "true" {reject}
+  ID = "false" {reject}
+  ID = "whr" {reject}
+  ID = "end" {reject}
+  ID = "lambda" {reject}
+  ID = "forall" {reject}
+  ID = "exists" {reject}
+  ID = "div" {reject}
+  ID = "mod" {reject}
+  ID = "in" {reject}
+
+lexical restrictions
+
+  // Ensure greedy matching for lexicals
+  
+  CommentChar   -/- [\/]
+  INT           -/- [0-9]
+  ID            -/- [a-zA-Z0-9\_\']
+  
+  // EOF may not be followed by any char
+  
+  EOF           -/- ~[]
+  
+  // Backslash chars in strings may not be followed by " 
+  
+  BackSlashChar -/- [\"]
+
+context-free restrictions
+
+  // Ensure greedy matching for comments
+  
+  LAYOUT? -/- [\ \t\n\r]
+  LAYOUT? -/- [\%]
+  LAYOUT? -/- [\/].[\*]

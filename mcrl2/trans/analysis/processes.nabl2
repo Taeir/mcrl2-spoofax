@@ -1,0 +1,123 @@
+module analysis/processes
+
+imports
+  desugar
+
+signature
+  namespaces
+    Process
+
+//Process declarations
+rules
+  [[ ProcessDecl(name, pexp) ^ (s) ]] :=
+    //TODO Scope for this one is not necessary, but added for clarity?
+    new processScope,
+    processScope -P-> s,
+    [[ pexp ^ (processScope) ]],
+    
+    Process{name} <- s,
+    Action{name} <- s,
+    Action{name} : ActionType() !!,
+    Process{name} ===> processScope.
+  
+  [[ ProcessDeclExt(name, varsdecls, pexp) ^ (s) ]] :=
+    new processScope,
+    processScope -P-> s,
+    [[ pexp ^ (processScope) ]],
+    Map1T(ProcessVars) [[ varsdecls ^ (processScope) : varTys ]],
+    
+    Process{name} <- s,
+    Action{name} <- s,
+    Action{name} : FunctionType(varTys, ActionType()) !!,
+    Process{name} ===> processScope.
+  
+  ProcessVars [[ VarsDecl(names, sexp) ^ (processScope) : processVarTy ]] :=
+    [[ sexp ^ (processScope) : processVarTy ]],
+    Map1t(ProcessVar) [[ names ^ (processScope) : processVarTy ]].
+  
+  ProcessVar [[ name ^ (processScope) : processVarTy ]] :=
+    Var{name} <- processScope,
+    Var{name} : processVarTy !!.
+  
+
+//Process expressions
+rules
+  //Simple
+  [[ Delta() ^ (s) ]].
+  [[ Tau()   ^ (s) ]].
+  
+  //Block, allow, hide, rename and comm
+  [[ Block(ActionSet(actions), pexp) ^ (s) ]] :=
+    [[ pexp ^ (s) ]],
+    Map1 [[ actions ^ (s) ]].
+  
+  [[ Allow(MultActLblSet(multActions), pexp) ^ (s) ]] :=
+    [[ pexp ^ (s) ]],
+    Map1 [[ multActions ^ (s) ]].
+  
+  [[ Hide(ActionSet(actions), pexp) ^ (s) ]] :=
+    [[ pexp ^ (s) ]],
+    Map1 [[ actions ^ (s) ]].
+  
+  [[ Rename(RenExpSet(renames), pexp) ^ (s) ]] :=
+    [[ pexp ^ (s) ]],
+    Map1 [[ renames ^ (s) ]].
+  
+  [[ Comm(CommExpSet(communications), pexp) ^ (s) ]] :=
+    [[ pexp ^ (s) ]],
+    Map1 [[ communications ^ (s) ]].
+  
+  //Binary expressions
+  [[ ProcBinExp(_, pexp1, pexp2) ^ (s) ]] :=
+    [[ pexp1 ^ (s) ]],
+    [[ pexp2 ^ (s) ]].
+  
+  //Other
+  [[ ProcRef(name) ^ (s) ]] :=
+    Process{name} -> s,
+    Process{name} |-> processDecl | error $[Unable to find process [name]].
+  
+  [[ If(dexp, pexp) ^ (s) ]] :=
+    [[ dexp ^ (s) : dataTy ]],
+    [[ pexp ^ (s) ]].
+  
+  [[ IfElse(dexp, IfThen(pexp1), pexp2) ^ (s) ]] :=
+    [[ dexp ^ (s) : dataTy ]],
+    [[ pexp1 ^ (s) ]],
+    [[ pexp2 ^ (s) ]].
+  
+  //Sum specification (TODO?)
+  [[ Sum(varDecls, pexp) ^ (s) ]] :=
+    new sumScope,
+    sumScope -P-> s,
+    
+    [[pexp ^ (sumScope) ]],
+    Map2(SumVars) [[ varDecls ^ (s, sumScope) ]].
+  
+  SumVars [[ VarsDecl(names, sexp) ^ (s, sumScope) ]] :=
+    [[ sexp ^ (s) : varTy ]],
+    Map1T(SumVar) [[ names ^ (sumScope) : varTy ]].
+  
+  SumVar [[ name ^ (s) : varTy ]] :=
+    Var{name} <- s,
+    Var{name} : varTy !!,
+    Var{name}.origin := SumVar().
+  
+  //Assigning to a process
+  [[ ProcessAssignment(ProcRef(name), assignments) ^ (s) ]] :=
+    Process{name} -> s,
+    Process{name} |-> processDecl | error $[Unable to find process [name]],
+    processDecl ?===> processScope,
+    
+    new resolveScope,
+    resolveScope -P-> processScope,
+    
+    Map2(ProcessAssign) [[ assignments ^ (s, resolveScope) ]].
+  
+  ProcessAssign [[ Assignment(dref, dexp) ^ (s, resolveScope) ]] :=
+    [[ dexp ^ (s) : dataTy ]],
+    [[ dref ^ (resolveScope) : dataRefTy ]],
+    
+    dataTy <sub? dataRefTy | error $[Cannot assign a value of type [dataTy] to a variable of type [dataRefTy]].
+    
+    

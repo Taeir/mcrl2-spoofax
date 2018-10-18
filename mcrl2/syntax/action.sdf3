@@ -1,0 +1,28 @@
+module action
+
+imports
+  mcrl2common
+  data
+  sort
+
+template options
+  keyword -/- [a-zA-Z0-9]
+  tokenize: ",#;"
+
+context-free start-symbols
+  Action
+  ActionDecl
+
+context-free syntax
+  Action.NoArgsActionRef = <<ActionRef>>
+  Action.ActionRefExt    = <<ActionRef>(<DataExpList>)>
+  
+  ActionRef.ActionRef = <<ID>>
+  
+  ActionDecl.ActionDecl = <<{ID ", "}+>;>
+  ActionDecl.ActionDeclExt = <<{ID ", "}+>: <{SortExp " #"}+>;>
+  
+  MultAct.Tau         = <tau>
+  MultAct.Empty       = 
+  MultAct.MultiAction = <<{Action " | "}+>>
+  

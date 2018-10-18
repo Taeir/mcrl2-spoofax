@@ -1,0 +1,19 @@
+module externals
+
+rules
+	/**
+	 * Invokes the command passed as a tuple.
+	 *
+	 * @param  tuple  - the program to run and arguments
+	 * @return Int - 0 if success, 1 if failure
+	 */
+	external mcrl-invoke(|)
+	
+	/**
+	 * Invokes the command passed as a tuple.
+	 *
+	 * @param  String - the base directory
+	 * @param  tuple  - the program to run and arguments
+	 * @return String - the output of the program
+	 */
+	external mcrl-invoke-await(|basedir)

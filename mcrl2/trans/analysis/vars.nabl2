@@ -1,0 +1,15 @@
+module analysis/vars
+
+signature
+  namespaces
+    Var
+
+rules
+  Vars [[ VarsDecl(names, sexp) ^ (s) ]] :=
+    [[ sexp ^ (s) : varTy ]],
+    Map1T(Var) [[ names ^ (s) : varTy ]].
+  
+  Var [[ name ^ (s) : varTy ]] :=
+    Var{name} <- s,
+    Var{name} : varTy !!,
+    Var{name}.origin := Var().

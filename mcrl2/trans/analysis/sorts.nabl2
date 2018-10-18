@@ -1,0 +1,96 @@
+module analysis/sorts
+
+imports
+  analysis/types
+  desugar
+
+signature
+  namespaces
+    StructConstructor
+
+//Sort Declarations
+rules
+  [[ SortAlias(name, sortExp) ^ (s) ]] :=
+    [[ sortExp ^ (s) : sTy ]],
+    Sort{name} <- s,
+    Sort{name} : sTy !!.
+  
+  [[ SortDecls(names) ^ (s) ]] :=
+    Map1 [[ names ^ (s) ]].
+  
+  [[ SortDeclID(name) ^ (s) ]] :=
+    new sortScope,
+    Sort{name} <- s,
+    Sort{name} : SortType(name, sortScope) !!.
+
+//Sort Expressions
+rules
+  //Simple types
+  [[ Boolean()    ^ (s) : BooleanType()    ]].
+  [[ PositiveNr() ^ (s) : PositiveNrType() ]].
+  [[ NaturalNr()  ^ (s) : NaturalNrType()  ]].
+  [[ Integer()    ^ (s) : IntegerType()    ]].
+  [[ Real()       ^ (s) : RealType()       ]].
+  
+  //Complexer sorts
+  [[ SList(sexp)   ^ (s) : ListType(sexpTy) ]] := [[ sexp ^ (s) : sexpTy ]].
+  [[ SSet(sexp)    ^ (s) : SetType(sexpTy)  ]] := [[ sexp ^ (s) : sexpTy ]].
+  [[ SBag(sexp)    ^ (s) : BagType(sexpTy)  ]] := [[ sexp ^ (s) : sexpTy ]].
+  [[ SortExp(sexp) ^ (s) : sexpTy           ]] := [[ sexp ^ (s) : sexpTy ]].
+  
+  //References to sorts
+  [[ SortRef(name) ^ (s) : sortRefTy ]] :=
+    Sort{name} -> s,
+    Sort{name} |-> sortDecl | error $[Unable to find sort [name]],
+    sortDecl : sortRefTy.
+  
+  //Function sorts
+  [[ FunctionSort(args, sexp) ^ (s) : FunctionType(argTys, funRetTy) ]] :=
+    Map1T [[ args ^ (s) : argTys ]],
+    [[ sexp ^ (s) : funRetTy ]].
+  
+  //Structs
+  [[ Struct(constructors) ^ (s) : StructType(structScope) ]] :=
+    new structScope,
+    Map2t [[ constructors ^ (s, structScope) : structType ]],
+    structType == StructType(structScope).
+  
+  //Constructor without arguments
+  [[ ConstrDecl(name, NoArgs(), NoConstrFunction()) ^ (s, structScope) : structType ]] :=
+    StructConstructor{name} <- structScope,
+    StructConstructor{name} : structType !!,
+    Var{name} <- s,
+    Var{name} : structType !!.
+  
+  [[ ConstrDecl(name, NoArgs(), ConstrFunction(funName)) ^ (s, structScope) : structType ]] :=
+    StructConstructor{name} <- structScope,
+    StructConstructor{name} : structType !!,
+    Var{name} <- s,
+    Var{name} : structType !!,
+    
+    Function{funName} <- s,
+    Function{funName} : FunctionType(structType, BooleanType()).
+  
+  //Constructor with arguments
+  [[ ConstrDecl(name, Args(args), NoConstrFunction()) ^ (s, structScope) : structType ]] :=
+    Map1T(ParseConstructorArg) [[ args ^ (s) : argTys ]],
+    StructConstructor{name} <- structScope,
+    StructConstructor{name} : FunctionType(argTys, structType) !!,
+    Var{name} <- s,
+    Var{name} : FunctionType(argTys, structType) !!.
+  
+  [[ ConstrDecl(name, Args(args), ConstrFunction(funName)) ^ (s, structScope) : structType ]] :=
+    Map1T(ParseConstructorArg) [[ args ^ (s) : argTys ]],
+    StructConstructor{name} <- structScope,
+    StructConstructor{name} : FunctionType(argTys, structType) !!,
+    Var{name} <- s,
+    Var{name} : FunctionType(argTys, structType) !!,
+    
+    Var{funName} <- s,
+    Var{funName} : FunctionType(structType, BooleanType()).
+  
+  ParseConstructorArg [[ ProjDecl(sortExp) ^ (s) : constructorArgTy ]] :=
+    [[ sortExp ^ (s) : constructorArgTy ]].
+  
+  ParseConstructorArg [[ ProjDeclNamed(_, sortExp) ^ (s) : constructorArgTy ]] :=
+    [[ sortExp ^ (s) : constructorArgTy ]].

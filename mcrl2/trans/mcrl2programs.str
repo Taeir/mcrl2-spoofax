@@ -1,0 +1,52 @@
+module mcrl2programs
+
+imports
+  externals
+  libspoofax/resource/path
+
+rules
+  show-graph:
+  (_, _, _, current-filename, project-path) -> (filename, result)
+    with
+      project-dir := <local-path> project-path;
+      current-file := <concat-strings> [project-dir, "/", current-filename];
+      filename := "outputs.graph"; //<guarantee-extension(|"graph")> current-filename;
+      result   := <mcrl-invoke> (
+        project-dir,
+        "scripts/renderGraph",
+        current-file)
+  
+  run-tests:
+  (_, _, _, current-filename, project-path) -> (filename, result)
+    with
+      project-dir := <local-path> project-path;
+      current-file := <concat-strings> [project-dir, "/", current-filename];
+      filename := <guarantee-extension(|"tests")> current-filename;
+      result   := <mcrl-invoke-await(|project-dir)> (
+        "scripts/runTests",
+        current-file)
+  
+  run-test:
+  (_, _, _, current-filename, project-path) -> (filename, result)
+    with
+      project-dir := <local-path> project-path;
+      current-file := <concat-strings> [project-dir, "/", current-filename];
+      model-file := <concat-strings> [project-dir, "/", "Model.mcrl2"];
+      filename := <guarantee-extension(|"tests")> current-filename;
+      result   := <mcrl-invoke-await(|project-dir)> (
+        "scripts/runTest",
+        model-file,
+        current-file)
+  
+  run-test-evidence:
+  (_, _, _, current-filename, project-path) -> (filename, result)
+    with
+      project-dir := <local-path> project-path;
+      current-file := <concat-strings> [project-dir, "/", current-filename];
+      model-file := <concat-strings> [project-dir, "/", "Model.mcrl2"];
+      filename := <guarantee-extension(|"tests")> current-filename;
+      result   := <mcrl-invoke-await(|project-dir)> (
+        "scripts/generateEvidence",
+        model-file,
+        current-file)
+    

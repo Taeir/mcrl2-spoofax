@@ -1,0 +1,79 @@
+---
+id: nl.taico:mcrl2:0.1.0-SNAPSHOT
+name: mcrl2
+dependencies:
+  compile:
+  - org.metaborg:org.metaborg.meta.lang.esv:${metaborgVersion}
+  - org.metaborg:org.metaborg.meta.lang.template:${metaborgVersion}
+#  - org.metaborg:org.metaborg.meta.nabl2.lang:${metaborgVersion}
+  - org.metaborg:statix.lang:${metaborgVersion}
+#  - org.metaborg:dynsem:${metaborgVersion}
+  source:
+  - org.metaborg:meta.lib.spoofax:${metaborgVersion}
+#  - org.metaborg:org.metaborg.meta.nabl2.shared:${metaborgVersion}
+#  - org.metaborg:org.metaborg.meta.nabl2.runtime:${metaborgVersion}
+  - org.metaborg:statix.runtime:${metaborgVersion}
+runtime:
+  nabl2:
+    debug: analysis files custom
+exports:
+   ## Stratego
+- language: Stratego-Sugar
+  directory: trans
+  includes:
+  - "mcrl2.str"
+  - "mcrl2/**/*.str"
+## SDF3
+- language: TemplateLang
+  directory: syntax
+  includes:
+  - "*.sdf3"
+- language: ATerm
+  directory: src-gen/syntax
+  includes:
+  - "**/*.aterm"
+- language: EditorService
+  directory: src-gen
+  includes:
+  - "completion/colorer/*.esv"
+- language: Stratego-Sugar
+  directory: src-gen
+  includes:
+  - "completion/*.str"
+  - "pp/*.str"
+  - "signatures/*.str"
+- directory: lib
+## Statix
+- language: ATerm
+  directory: src-gen/statix
+
+
+pardonedLanguages:
+- EditorService
+- Stratego-Sugar
+- SDF
+debug:
+  typesmart: false
+language:
+  sdf:
+    pretty-print: mcrl2
+    sdf2table: java
+    placeholder:
+      prefix: "$"
+  stratego:
+    format: ctree
+    args:
+    - -la
+    - stratego-lib
+    - -la
+    - stratego-sglr
+    - -la
+    - stratego-gpp
+    - -la
+    - stratego-xtc
+    - -la
+    - stratego-aterm
+    - -la
+    - stratego-sdf
+    - -la
+    - strc

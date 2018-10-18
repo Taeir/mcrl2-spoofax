@@ -1,0 +1,8 @@
+module equation
+
+imports
+  data
+
+context-free syntax
+  EqnDecl.EqnDecl            = <<DataExp> = <DataExp>;>
+  EqnDecl.EqnDeclConditioned = [[DataExp] -> [DataExp] = [DataExp];]

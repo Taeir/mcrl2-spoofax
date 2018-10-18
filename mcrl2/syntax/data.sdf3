@@ -1,0 +1,138 @@
+module data
+
+imports
+  mcrl2common
+  sort
+
+template options
+  keyword -/- [a-zA-Z0-9\_]
+  tokenize: "([{:,!-#.;"
+
+context-free syntax
+  VarDecl.VarDecl   = <<ID>: <SortExp>>
+  VarsDecl.VarsDecl = <<{ID ", "}+>: <SortExp>>
+  VarsDeclList.VarsDeclList      = <<{VarsDecl ", "}+>>
+  
+  DataExp = <(<DataExp>)> {bracket}
+  
+  //Constants
+  DataExp           = <<DataRef>>
+  DataRef.DataRef   = <<ID>>
+  DataExp.Number    = <<INT>>
+  DataExp.True      = <true>
+  DataExp.False     = <false>
+  DataExp.EmptyList = <[]>
+  DataExp.EmptySet  = <{}>
+  DataExp.EmptyBag  = <{:}>
+  
+  //Collections
+  DataExp.List   = <[<{DataExp    ", "}+>]>
+  DataExp.Bag    = <{<{BagEnumElt ", "}+>}>
+  DataExp.SetBag = <{<VarDecl> | <DataExp>}>
+  DataExp.Set    = <{<{DataExp    ", "}+>}>
+  
+  //Other
+  DataExp.FunctionUpdate = <<DataExp> [<DataExp> -\> <DataExp>]> {left}
+  DataExp.FunctionApp    = <<DataExp> (<{DataExp ", "}+>)> {left}
+  
+  //Unary operators
+  DataExp.Negate = <!<DataExp>> {right} //Also set complement
+  DataExp.Minus  = <-<DataExp>> {right}
+  DataExp.Size   = <#<DataExp>> {right}
+  
+  DataExp.Universal   = <forall <{VarsDecl ", "}+> . <DataExp>> {right}
+  DataExp.Existential = <exists <{VarsDecl ", "}+> . <DataExp>> {right}
+  DataExp.Lambda      = <lambda <{VarsDecl ", "}+> . <DataExp>> {right}
+  
+  //Binary operators
+  DataExp.Implication  = [[DataExp] => [DataExp]] {right}
+  DataExp.Conjunction  = <<DataExp> || <DataExp>> {right}
+  DataExp.Disjunction  = <<DataExp> && <DataExp>> {right}
+  
+  //Comparing
+  DataExp.Equality     = <<DataExp> == <DataExp>> {left}
+  DataExp.InEquality   = <<DataExp> != <DataExp>> {left}
+  DataExp.Smaller      = [[DataExp] < [DataExp]]  {left}
+  DataExp.SmallerEqual = [[DataExp] <= [DataExp]] {left}
+  DataExp.Larger       = [[DataExp] > [DataExp]]  {left}
+  DataExp.LargerEqual  = [[DataExp] >= [DataExp]] {left}
+  
+  DataExp.Membership   = <<DataExp> in <DataExp>> {left}
+  DataExp.ListCons     = [[DataExp] |> [DataExp]] {right}
+  DataExp.ListSnoc     = [[DataExp] <| [DataExp]] {left}
+  DataExp.ListConcat   = <<DataExp> ++ <DataExp>> {left}
+  DataExp.ListElementAt = <<DataExp> . <DataExp>> {left}
+  
+  DataExp.Add        = <<DataExp> + <DataExp>> {left}
+  DataExp.Subtract   = <<DataExp> - <DataExp>> {left}
+  DataExp.Divide     = <<DataExp> / <DataExp>> {left}
+  DataExp.IntDiv     = <<DataExp> div <DataExp>> {left}
+  DataExp.IntMod     = <<DataExp> mod <DataExp>> {left}
+  DataExp.Mult       = <<DataExp> * <DataExp>> {left}
+  
+  DataExp.Where      = <<DataExp> whr <{Assignment ", "}+> end> {left}
+  
+  DataExpList        = <<{DataExp ", "}+>>
+  
+  DataExpUnit.Bracket = <(<DataExp>)>
+  
+  DataExpUnit             = <<DataRef>>
+  DataExpUnit.Number      = <<INT>>
+  DataExpUnit.True        = <true>
+  DataExpUnit.False       = <false>
+  DataExpUnit.FunctionApp = <<DataExpUnit>(<{DataExp ", "}+>)> {left}
+  DataExpUnit.Negate      = <!<DataExpUnit>> {right} //Also set complement
+  DataExpUnit.Minus       = <-<DataExpUnit>> {right}
+  DataExpUnit.Size        = <#<DataExpUnit>> {right}
+  
+  Assignment.Assignment = <<DataRef> = <DataExp>>
+  AssignmentList        = <<{Assignment ", "}+>>
+  
+  BagEnumElt.BagElement = <<DataExp>: <DataExp>>
+  BagEnumEltList        = <<{BagEnumElt ", "}+>>
+
+context-free priorities
+  {left: DataExpUnit.FunctionApp} > //14
+  {right: //13
+    DataExpUnit.Negate
+    DataExpUnit.Minus
+    DataExpUnit.Size},
+  
+  {left: //13
+    DataExp.FunctionUpdate
+    DataExp.FunctionApp} >
+  {left: //12
+    DataExp.Negate
+    DataExp.Minus
+    DataExp.Size
+    DataExp.Mult
+    DataExp.ListElementAt} >
+  {left: //11
+    DataExp.Divide
+    DataExp.IntDiv
+    DataExp.IntMod} >
+  {left: //10
+    DataExp.Add
+    DataExp.Subtract} >
+  DataExp.ListConcat > //9
+  DataExp.ListSnoc >   //8
+  DataExp.ListCons >   //7
+  {left: //6
+    DataExp.Smaller
+    DataExp.SmallerEqual
+    DataExp.Larger
+    DataExp.LargerEqual
+    DataExp.Membership} >
+  {left: //5
+    DataExp.Equality
+    DataExp.InEquality} >
+  DataExp.Disjunction > //4
+  DataExp.Conjunction > //3
+  DataExp.Implication > //2
+  {right: //1 //TODO Is this one right??
+    DataExp.Universal
+    DataExp.Existential
+    DataExp.Lambda} >
+  DataExp.Where //0
+    
+  

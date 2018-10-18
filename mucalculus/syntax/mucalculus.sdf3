@@ -1,0 +1,17 @@
+module mucalculus
+
+imports
+  
+  mcrl2common
+  multiactions
+  actionformulas
+  regularformulas
+  stateformulas
+
+context-free start-symbols
+  
+  MCF
+
+context-free syntax
+  MCF.MCF = <<StateFormula>>
+

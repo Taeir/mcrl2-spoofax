@@ -1,0 +1,63 @@
+module sections
+
+imports
+  action
+  data
+  equation
+  sort
+  process
+  mcrl2common
+
+template options
+  keyword -/- [a-zA-Z0-9]
+  tokenize: ":;"
+
+context-free syntax
+  Section.ProcessSection = <
+    proc
+      <{ProcessDecl "\n"}+>
+  >
+  
+  Section.ActionSection = <
+    act
+      <{ActionDecl "\n"}+>
+  >
+  
+  Section.InitSection = <
+    init <ProcExp>;
+  >
+  
+  Section.SortSection = <
+    sort
+      <{SortDecl "\n"}+>
+  >
+  
+  Section.ConstructorSection = <
+    cons
+      <{IdsDecl ";\n"}+>;
+  >
+  
+  Section.MapSection = <
+    map
+      <{IdsDecl ";\n"}+>;
+  >
+  
+  Section.GlobalVarsSection = <
+    glob
+      <{VarsDeclList ";\n"}+>;
+  >
+  
+  Section.VarSection = <
+    var
+      <{VarsDeclList ";\n"}+>;
+  >
+  
+  //TODO Officially the var section optionally goes before the equations section
+  Section.EquationsSection = <
+    eqn
+      <{EqnDecl "\n"}+>
+  >
+  
+  IdsDecl.TypedParams = <<{ID ", "}+>: <SortExp>>
+  
+  

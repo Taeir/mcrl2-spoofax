@@ -1,0 +1,11 @@
+module analysis/globalvars
+
+rules
+  GlobalVars [[ VarsDecl(names, sexp) ^ (s) ]] :=
+    [[ sexp ^ (s) : globalVarTy ]],
+    Map1T(GlobalVar) [[ names ^ (s) : globalVarTy ]].
+  
+  GlobalVar [[ name ^ (s) : globalVarTy ]] :=
+    Var{name} <- s,
+    Var{name} : globalVarTy !!,
+    Var{name}.origin := Global().

@@ -1,0 +1,26 @@
+module regularformulas
+
+imports
+	actionformulas
+
+context-free start-symbols
+	RegularFormula
+
+context-free syntax
+	RegularFormula.ActionFormula = <<ActionFormula>> {left}
+	RegularFormula = <(<RegularFormula>)> {bracket}
+	
+	RegularFormula.Empty         = <nil>
+	RegularFormula.Choice        = <<RegularFormula> + <RegularFormula>> {left}
+	RegularFormula.Concatenation = <<RegularFormula> . <RegularFormula>> {right}
+	RegularFormula.Star          = <<RegularFormula>*> {left}
+	RegularFormula.Plus          = <<RegularFormula>+> {left}
+
+context-free priorities
+	RegularFormula.ActionFormula > //20
+	{left: //3
+		RegularFormula.Star
+		RegularFormula.Plus} >
+	RegularFormula.Choice >
+	RegularFormula.Concatenation
+	

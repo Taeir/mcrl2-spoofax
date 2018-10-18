@@ -1,0 +1,13 @@
+---
+id: nl.taico:mucalculus.example:0.1.0-SNAPSHOT
+name: mucalculus
+dependencies:
+  compile:
+  - nl.taico:mucalculus:0.1.0-SNAPSHOT
+debug:
+  typesmart: false
+runtime:
+  nabl2:
+    debug: analysis files
+build:
+  useBuildSystemSpec: true

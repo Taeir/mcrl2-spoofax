@@ -1,0 +1,7 @@
+module test
+
+language mcrl2
+
+test parse [[
+
+]] parse succeeds

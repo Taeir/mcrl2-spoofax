@@ -1,0 +1,49 @@
+module pp
+
+imports
+
+  libstratego-gpp
+  libspoofax/sdf/pp
+  libspoofax/editor/refactoring/-
+  pp/mucalculus-parenthesize
+  pp/mucalculus-pp
+
+rules
+
+  editor-format:
+    (node, _, ast, path, project-path) -> (filename, result)
+    with
+      ext      := <get-extension> path
+    ; filename := <guarantee-extension(|$[pp.[ext]])> path
+    ; result   := <pp-debug> node
+
+rules
+  
+  pp-mucalculus-string =
+    parenthesize-mucalculus
+    ; prettyprint-mucalculus-start-symbols
+    ; !V([], <id>)
+    ; box2text-string(|120)
+      
+  pp-partial-mucalculus-string =
+    parenthesize-mucalculus
+    ; prettyprint-mucalculus
+    ; !V([], <id>)
+    ; box2text-string(|120)
+    
+  pp-partial-mucalculus-string(|sort) =
+    parenthesize-mucalculus
+    ; prettyprint-mucalculus(|sort)
+    ; !V([], <id>)
+    ; box2text-string(|120)  
+      
+  pp-debug :
+    ast -> result
+    with
+       result := <pp-mucalculus-string> ast
+    <+ <bottomup(try(not(is-string); not(is-list); not(pp-mucalculus-string); debug(!"cannot pp ")))> ast
+    ;  result := ""
+
+rules
+  
+  construct-textual-change = construct-textual-change(pp-partial-mucalculus-string, parenthesize, override-reconstruction, resugar)

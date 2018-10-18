@@ -1,0 +1,22 @@
+module mcrl2
+
+imports
+  
+  mcrl2common
+  action
+  sort
+  sections
+
+template options
+  keyword -/- [a-zA-Z0-9\_]
+
+context-free start-symbols
+  
+  Program
+  
+context-free syntax
+  
+  Program.Program = <
+    <{Section "\n"}*>
+  >
+  
