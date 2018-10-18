@@ -1,0 +1,13 @@
+---
+id: nl.taico:mcrl2.example:0.1.0-SNAPSHOT
+name: mcrl2
+dependencies:
+  compile:
+  - nl.taico:mcrl2:0.1.0-SNAPSHOT
+debug:
+  typesmart: false
+runtime:
+  nabl2:
+    debug: analysis files
+build:
+  useBuildSystemSpec: true
