@@ -1,4 +1,9 @@
+# Spoofax
 *.aterm
+*.gv
+*.dot
+*.stxresult
+*.analyzed.stxtest
 
 *.pbes
 *.lps

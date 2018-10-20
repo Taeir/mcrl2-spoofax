@@ -2,7 +2,8 @@ module analysis2/mcrl2
 
 signature
 
-  sorts ID = string
+  sorts ID  = string
+  sorts INT = int
   
   //---------------------------------------------------------------------------
   //Program and sections
@@ -35,7 +36,63 @@ signature
   //---------------------------------------------------------------------------
   //Data
   sorts DataExp constructors
-    //TODO
+    DataRef        : ID -> DataExp
+    Number         : INT -> DataExp
+    True           : DataExp
+    False          : DataExp
+    EmptyList      : DataExp
+    EmptySet       : DataExp
+    EmptyBag       : DataExp
+    List           : list(DataExp) -> DataExp
+    Bag            : list(BagEnumElt) -> DataExp //TODO
+//    SetBag         : VarDecl * DataExp -> DataExp //TODO
+    Set            : list(DataExp) -> DataExp
+    FunctionUpdate : DataExp * DataExp * DataExp -> DataExp
+    FunctionApp    : DataExp * list(DataExp) -> DataExp
+    DataBinExp     : DataBinOp * DataExp * DataExp -> DataExp
+    DataUnExp      : DataUnOp * DataExp -> DataExp
+    
+    Existential    : list(VarsDecl) * DataExp -> DataExp
+    Universal      : list(VarsDecl) * DataExp -> DataExp
+    Lambda         : list(VarsDecl) * DataExp -> DataExp
+    
+  sorts DataBinOp constructors
+    Implication   : DataBinOp
+    Conjunction   : DataBinOp
+    Disjunction   : DataBinOp
+    
+    Equality      : DataBinOp
+    InEquality    : DataBinOp
+    Smaller       : DataBinOp
+    SmallerEqual  : DataBinOp
+    Larger        : DataBinOp
+    LargerEqual   : DataBinOp
+    
+    Membership    : DataBinOp
+    ListCons      : DataBinOp
+    ListSnoc      : DataBinOp
+    ListConcat    : DataBinOp
+    ListElementAt : DataBinOp
+    
+    Add      : DataBinOp
+    Subtract : DataBinOp
+    Divide   : DataBinOp
+    IntDiv   : DataBinOp
+    IntMod   : DataBinOp
+    Mult     : DataBinOp
+    
+    Where : DataBinOp
+    
+  sorts DataUnOp constructors
+    Negate : DataUnOp
+    Minus  : DataUnOp
+    Size   : DataUnOp
+  
+  sorts BagEnumElt constructors
+    BagElement : DataExp * DataExp -> BagEnumElt
+  
+  sorts VarsDecl constructors
+    VarsDecl : list(ID) * SortExp -> VarsDecl
   
   //---------------------------------------------------------------------------
   //Equations
@@ -64,9 +121,6 @@ signature
     SortRef      : ID -> SortExp
     FunctionSort : list(SortExp) * SortExp -> SortExp
     Struct       : list(ConstrDecl) -> SortExp
-  
-//  sorts SortRef constructors
-//    SortRef : ID -> SortRef
   
   sorts ConstrDecl constructors
     ConstrDecl : ID * ConstrArgs * ConstrFunction -> ConstrDecl
@@ -151,6 +205,12 @@ rules
   
   sectionOK(s, SortSection(sortDecls)) :-
     sortDeclsOK(s, sortDecls).
+  
+  sectionOK(s, EquationsSection(equationDecls)) :-
+    equationDeclsOK(s, equationDecls).
+  
+  sectionOK(s, MapSection(mapDecls)) :-
+    mapDeclsOK(s, mapDecls).
 
 //-----------------------------------------------------------------------------
 //Actions
@@ -159,7 +219,7 @@ rules
   actionDeclOK : scope * ActionDecl
   actionDeclsOK     maps actionDeclOK(*, list(*))
   actionDeclNamesOK maps actionOK(*, list(*), *)
-  
+   
   actionDeclOK(s, ActionDecl(names)) :-
     actionDeclNamesOK(s, names, ActionType()).
   
@@ -170,6 +230,26 @@ rules
   //Action declaration
   actionOK(s, name, t) :-
     s -> Action{name@name} with typeOfDecl t.
+
+//-----------------------------------------------------------------------------
+//Map
+rules
+  mapDeclNameOK  : scope * string * Type
+  mapDeclOK      : scope * IdsDecl
+  mapDeclsOK maps mapDeclOK(*, list(*))
+  mapDeclNamesOK maps mapDeclNameOK(*, list(*), *)
+  
+  
+  mapDeclOK(s, TypedParams(names, sexp)) :- {t}
+    typeOfSortExp(s, sexp) == t,
+    mapDeclNamesOK(s, names, t).
+    
+  mapDeclNameOK(s, name, t) :-
+    s -> Function{name@name} with typeOfDecl t.
+  
+  
+  
+  
 
 //-----------------------------------------------------------------------------
 //Sorts
@@ -188,9 +268,6 @@ rules
   
   sortOK(s, SortDeclID(name)) :- 
     s -> Sort{name@name} with typeOfDecl SortType(name).
-
-rules
-  
 
 rules
   
@@ -270,6 +347,114 @@ rules
   typeOfProjDecl(s, ProjDecl(sexp)) = T :-
     typeOfSortExp(s, sexp) == T.
   typeOfProjDecl(s, ProjDeclNamed(_, sexp)) = T :-
-    //TODO Use the name somewhere or at least store it (as a relation on the type)
+    //TODO Use the name somewhere or at least store it (as a relation on the type?)
     typeOfSortExp(s, sexp) == T.
+
+//-----------------------------------------------------------------------------
+//Equations
+rules
+  equationOK : scope * EqnDecl
+  equationDeclsOK maps equationOK(*, list(*))
+  
+  equationOK(s, EqnDecl(dexp1, dexp2)) :- {T F}
+    typeOfDataExp(s, dexp1) == T,
+    typeOfDataExp(s, dexp2) == F.
+    //TODO F is subtype of T
+  
+  equationOK(s, EqnDeclConditioned(condition, dexp1, dexp2)) :- {T F}
+    typeOfDataExp(s, condition) == BoolType(),
+    typeOfDataExp(s, dexp1) == T,
+    typeOfDataExp(s, dexp2) == F.
+    //TODO F is subtype of T
+  
+//-----------------------------------------------------------------------------
+//Data
+rules
+  typeOfDataExp : scope * DataExp -> Type
+  typeOfDataExps maps typeOfDataExp(*, list(*)) = list(*)
+  
+  
+  //References can occur to StructConstructor, Function and Var
+  typeOfDataExp(s, DataRef(name)) = T :-
+    query typeOfDecl filter lexicalPathMatch and { d :- dataRef(name, d) }
+          in s |-> [(_, (_, T))].
+  
+  //Simple data expressions
+  typeOfDataExp(s, Number(_)) = NatType().
+  typeOfDataExp(s, True())    = BoolType().
+  typeOfDataExp(s, False())   = BoolType().
+  typeOfDataExp(s, EmptyList()) = ListType(AnyType()).
+  typeOfDataExp(s, EmptyBag())  = BagType(AnyType()).
+  typeOfDataExp(s, EmptySet())  = SetType(AnyType()).
+  
+  //Lists sets and bags
+  typeOfDataExp(s, List(dexps))  = T :- {Us V}
+    typeOfDataExps(s, dexps) == Us,
+    T == ListType(V).
+  typeOfDataExp(s, Set(dexps))  = T :- {Us V}
+    typeOfDataExps(s, dexps) == Us,
+    T == SetType(V).
+  typeOfDataExp(s, Bag(bagElements))  = T :- {Ts}
+    bagElementsOK(s, bagElements) == T.
+  
+  bagElementsOK maps bagElementOK(*, list(*)) = *
+  bagElementOK : scope * BagEnumElt -> Type
+  bagElementOK(s, BagElement(dexp1, dexp2)) = T :- {TV}
+    typeOfDataExp(s, dexp1) == TV, 
+    typeOfDataExp(s, dexp2) == NatType(), //TODO Subtype
+    T == BagType(TV).
+
+  //Mappings
+  typeOfDataExp(s, FunctionUpdate(de1, de2, de3)) = TFun :- {T2 T3}
+    typeOfDataExp(s, de1) == TFun,
+    TFun == FunctionType([T2], T3),
+    typeOfDataExp(s, de2) == T2,
+    typeOfDataExp(s, de3) == T3.
+  
+  typeOfDataExp(s, FunctionApp(dfun, dargs)) = TFunApp :- {TFun TArgs}
+    typeOfDataExp(s, dfun) == TFun,
+    typeOfDataExps(s, dargs) == TArgs,
+    TFun == FunctionType(TArgs, TFunApp). //TODO subtyping
+    
+  typeOfDataExp(s, Lambda(varsDecls, dexp)) = TLambda :- {s_lambda TLambdaRet}
+    new s_lambda,
+    s_lambda -P-> s,
+    bindVarsDecls(s_lambda, varsDecls),
+    typeOfDataExp(s_lambda, dexp) == TLambdaRet.
+
+rules
+  bindVarDecl : scope * string * Type
+  bindVarsDecl : scope * VarsDecl
+  bindVarsDecls maps bindVarsDecl(*, list(*))
+  bindVarDeclNames maps bindVarDecl(*, list(*), *)
+  
+  bindVarsDecl(s, VarsDecl(names, sexp)) :- {T}
+    typeOfSortExp(s, sexp) == T,
+    bindVarDeclNames(s, names, T).
+    
+  bindVarDecl(s, name, T) :-
+    s -> Var{name@name} with typeOfDecl T.
+
+rules
+  dataRef : string * occurrence
+  
+  dataRef(x, StructConstructor{x@_}).
+  dataRef(x, Function{x@_}).
+  dataRef(x, Var{x@_}).
+
+//-----------------------------------------------------------------------------
+//Built in functions
+//head on list
+//tail on list
+//count(a,b): Bag(S) * S -> Nat
+//Set2Bag: Set(S) -> Bag(S)
+//Bag2Set: Bag(S) -> Set(S)
+
+//-----------------------------------------------------------------------------
+//Types
+rules
+  getType : Type -> Type
+  allTypesTheSame maps getType(list(*)) = *
+  
+  getType(t) = t.
  

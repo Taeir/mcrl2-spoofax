@@ -69,7 +69,7 @@ rules
     Var{name} : structType !!,
     
     Function{funName} <- s,
-    Function{funName} : FunctionType(structType, BooleanType()).
+    Function{funName} : FunctionType([structType], BooleanType()).
   
   //Constructor with arguments
   [[ ConstrDecl(name, Args(args), NoConstrFunction()) ^ (s, structScope) : structType ]] :=

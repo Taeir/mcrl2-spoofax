@@ -103,7 +103,7 @@ rules
     listTy == ListType(baseTy) | error $[You can only use "|>" on lists (not on [listTy])]@dlist,
     elemTy <sub? baseTy | error $[The type of the given element does not match the type of other elements in the list.].
   
-  [[ DataBinExp(ListCons(), dlist, delem) ^ (s) : listTy ]] :=
+  [[ DataBinExp(ListSnoc(), dlist, delem) ^ (s) : listTy ]] :=
     [[ delem ^ (s) : elemTy ]],
     [[ dlist ^ (s) : listTy ]],
     listTy == ListType(baseTy) | error $[You can only use "<|" on lists (not on [listTy])]@dlist,

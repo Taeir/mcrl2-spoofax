@@ -4,6 +4,7 @@ imports
   signatures/sort-sig
   signatures/process-sig
   signatures/data-sig
+  desugar/flatten
 
 signature
   sorts
