@@ -1,0 +1,88 @@
+resolve {v}
+  resolve(Ref("a", BoolType()), [Decl("a", BoolType(), PosType()), Decl("a", IntType(), NatType())]) == v
+  
+
+signature
+  sorts Ref constructors
+    Ref : string * Type -> Ref
+  
+  sorts Decl constructors
+    Decl : string * Type * Type -> Decl
+    
+  sorts Type constructors
+    BoolType   : Type
+    
+    PosType    : Type
+    NatType    : Type
+    IntType    : Type
+    RealType   : Type
+    
+    ListType   : Type -> Type
+    SetType    : Type -> Type
+    BagType    : Type -> Type
+    
+    StructType : scope -> Type
+    FunctionType : Type * Type -> Type
+    
+    SortType   : string -> Type
+    
+    ActionType : Type
+    
+    AnyType    : Type
+    
+    MAPPING : scope -> Type
+    MAPPINGTY : Type -> Type
+  
+  //---------------------------------------------------------------------------
+  relations
+    typeOfDecl : occurrence -> Type
+  
+  namespaces
+    Var    : string
+    Var2   : string * Type
+    MType  :
+    Mapping : string
+    
+    
+  name-resolution
+    labels P
+    
+    resolve Var   filter lexicalPathMatch min lexicalPathOrd
+    resolve Mapping  filter lexicalPathMatch min lexicalPathOrd //TODO subtypePathOrd
+    resolve MType    filter lexicalPathMatch min lexicalPathOrd //TODO subtypePathOrd
+
+rules
+  lexicalPathMatch : list(label)
+  lexicalPathOrd   : label * label
+
+  lexicalPathMatch(p)    :- pathMatch[P*](p).
+  lexicalPathOrd(p1, p2) :- pathLt[$ < P](p1, p2).
+
+rules
+  resolve : Ref * list(Decl) -> Type
+  resolveRef : scope * Ref -> Type
+  
+  resolve(ref, decls) = T :- {s}
+    new s,
+    bindAll(s, decls),
+    resolveRef(s, ref) == T.
+  
+  resolveRef(s, Ref(name, tyToFind)) = T :- {p T2 tyRet}
+    query typeOfDecl filter lexicalPathMatch and { d :- d == Var2{name tyToFind@_} }
+                     in s |-> [(p, (_, T))].
+  
+rules
+  bind : scope * Decl
+  bindAll maps bind(*, list(*))
+  
+  bind(s, Decl(name, tyIn, tyOut)) :-
+    s -> Var2{name tyIn@name} with typeOfDecl FunctionType(tyIn, tyOut).
+
+//rules
+//  findVar : scope * string * Type * occurrence
+//  findVar(s, name, tyToFind, occ) :- {TFound}
+//    typeOfDecl of occ in s |-> [(_, (_, TFound))],
+//    TFound == FunctionType(tyToFind, tyRet).
+
+
+  

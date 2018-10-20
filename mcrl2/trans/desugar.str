@@ -5,6 +5,7 @@ imports
   signatures/process-sig
   signatures/data-sig
   desugar/flatten
+  desugar/mapping
 
 signature
   sorts
@@ -57,7 +58,7 @@ signature
     Where : DataBinOp
 
 strategies
-  desugar-all = topdown(try(desugar))
+  desugar-all = topdown(try(desugar)); topdown(try(desugar-mapping))
 
 rules
   desugar: Choice(e1, e2)    -> ProcBinExp(Choice(), e1, e2)

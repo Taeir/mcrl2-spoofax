@@ -176,11 +176,6 @@ signature
     ActionType : Type
     
     AnyType    : Type
-    
-    ChoiceType : list(list(Type)) * Type -> Type
-    FunctionInputType : list(Type) -> Type
-    
-    MAPPINGTYPE : scope -> Type
   
   //---------------------------------------------------------------------------
   relations
@@ -193,8 +188,7 @@ signature
     Sort   : string
     StructConstructor : string
     MType  :
-    Mapping : string
-    TypeOption : list(Type)
+    Mapping : string * Type
     //TODO Give mapping a scope by name
     
     
@@ -250,7 +244,7 @@ rules
     bindVarDecls(s_equations, varDecls),
     equationDeclsOK(s_equations, equationDecls).
   
-  sectionOK(s, MapSection(MapDeclList(mapDecls))) :-
+  sectionOK(s, MapSection(VarDeclList(mapDecls))) :-
     mapDeclsOK(s, mapDecls).
 
 //-----------------------------------------------------------------------------
@@ -270,26 +264,15 @@ rules
 //Map
 rules
 
-  mapDeclOK : scope * MapDecl
+  relation tMapping : -> Type
+  
+  mapDeclOK : scope * VarDecl
   mapDeclsOK maps mapDeclOK(*, list(*))
   
-  mapDeclOK(s, MapDecl(name, sexp)) :- {d_map T s_mappingtype}
-    d_map == Mapping{name@name},
+  mapDeclOK(s, VarDecl(name, sexp)) :- {d_map T s_mappingtype}
+    d_map == Mapping{name T@name},
     typeOfSortExp(s, sexp) == T,
     s -> d_map with typeOfDecl T.
-  
-  mapDeclOK(s, MapDeclExt(name, sexps)) :- {d_map Ts TInputs s_mapping}
-    d_map == Mapping{name@name},
-    typeOfSortExps(s, sexps) == Ts,
-    getFunctionInputTypes(Ts) == TInputs,
-    
-    new s_mapping,
-    bindInputTypesInScope(s_mapping, TInputs),
-    
-    //TODO Use CTellRel !scopeOfMapping[s_mapping] in s ??
-    s -> d_map with typeOfDecl MAPPINGTYPE(s_mapping).
-//    mergeTypesList(Ts) == T,
-//    s -> d_map with typeOfDecl T.
 
 //-----------------------------------------------------------------------------
 //Sorts
@@ -361,7 +344,7 @@ rules
     struct_scope -> d_constructor with typeOfDecl T,
     s            -> d_constructor with typeOfDecl T,
     Tfun == FunctionType([T], BoolType()),
-    s -> Mapping{funName@funName} with typeOfDecl Tfun.
+    s -> Mapping{funName Tfun@funName} with typeOfDecl Tfun.
     
   resolveConstructor(s, struct_scope, ConstrDecl(name, Args(args), NoConstrFunction())) :- {d_constructor T argTypes}
     d_constructor == StructConstructor{name@name},
@@ -376,7 +359,7 @@ rules
     struct_scope -> d_constructor with typeOfDecl T,
     s            -> d_constructor with typeOfDecl T,
     Tfun == FunctionType([T], BoolType()),
-    s -> Mapping{funName@funName} with typeOfDecl Tfun.
+    s -> Mapping{funName Tfun@funName} with typeOfDecl Tfun.
   
   typeOfProjDecl : scope * ProjDecl -> Type
   typeOfProjDecls maps typeOfProjDecl(*, list(*)) = list(*)
@@ -448,13 +431,10 @@ rules
     typeOfDataExp(s, de2) == T2,
     typeOfDataExp(s, de3) == T3.
   
-//  typeOfDataExp(s, FunctionApp(dfun, dargs)) = TFunApp :- {TFun TArgs}
-//    typeOfDataExp(s, dfun) == TFun,
-//    typeOfDataExps(s, dargs) == TArgs,
-//    TFun == FunctionType(TArgs, TFunApp). //TODO subtyping
-  typeOfDataExp(s, FunctionApp(DataRef(name), dargs)) = TFunApp :- {TArgs}
+  typeOfDataExp(s, FunctionApp(dfun, dargs)) = TFunApp :- {TFun TArgs}
+    typeOfDataExp(s, dfun) == TFun,
     typeOfDataExps(s, dargs) == TArgs,
-    findMapping(s, name, TArgs) == TFunApp.
+    TFun == FunctionType(TArgs, TFunApp). //TODO subtyping
     
   typeOfDataExp(s, Lambda(VarDeclList(varDecls), dexp)) = TLambda :- {s_lambda TLambdaRet}
     new s_lambda,
@@ -479,27 +459,14 @@ rules
   dataRef : string * occurrence
   
   dataRef(x, StructConstructor{x@_}).
-  dataRef(x, Mapping{x@_}).
+  dataRef(x, y) :- {T}
+    T == NatType(),
+    y == Mapping{x T@_}.
   dataRef(x, Var{x@_}).
-  
-  
-  typeOfDataExp(s, FunctionApp(dfun, dargs)) = TFunApp :- {TFun TArgs}
-    typeOfDataExp(s, dfun) == TFun,
-    typeOfDataExps(s, dargs) == TArgs,
-    TFun == FunctionType(TArgs, TFunApp). //TODO subtyping
-  
-  findMapping : scope * string * list(Type) -> Type
-  findMapping(s, name, tyArgs) = T :- {TMapping s_mapping}
-    query typeOfDecl filter lexicalPathMatch and { d :- d == Mapping{name@_} }
-          in s |-> [(_, (_, TMapping))],
-    TMapping == MAPPINGTYPE(s_mapping),
-    query typeOfDecl filter lexicalPathMatch and { d :- d == TypeOption{tyArgs@_} }
-          in s_mapping |-> [(_, (_, T))]
-    .
   
 
 //-----------------------------------------------------------------------------
-//Built in functions TODO
+//Built in functions
 //head on list
 //tail on list
 //count(a,b): Bag(S) * S -> Nat
@@ -509,72 +476,9 @@ rules
 //-----------------------------------------------------------------------------
 //Types
 rules
-  /**
-   * Checks if all types in the given list are the same, and returns that type.
-   */
-  allTypesTheSame maps getType(list(*)) = *
-
-  /**
-   * Returns the type that is given.
-   */
   getType : Type -> Type
+  allTypesTheSame maps getType(list(*)) = *
   
-  /**
-   * Merges two types into one type, if possible.
-   * Valid combinations are:
-   * - The same type on both sides
-   * - Two functionTypes/choiceTypes with the same output type
-   */
-  mergeTypes : Type * Type -> Type
-  
-  /**
-   * Merges a list of types into one type with #mergeTypes(Type, Type).
-   */
-  mergeTypesList : list(Type) -> Type
-  
-  
-  //-----------------------------------
   getType(t) = t.
   
-  
-  mergeTypesList([ty1, ty2]) = mergeTypes(ty1, ty2).
-  mergeTypesList([ty1, ty2 | tys@[_|_]]) = mergeTypesList([mergeTypes(ty1, ty2) | tys]).
-  
-  
-  //Same types is fine (TODO is it?)
-  mergeTypes(ty, ty) = ty.
-  
-  //If we have two functions, their output must be the same. We can join the inputs in a ChoiceType.
-  mergeTypes(FunctionType(tyIn1, tyOut), FunctionType(tyIn2, tyOut)) = ChoiceType([tyIn1, tyIn2], tyOut).
-  
-  //Merge together functions and choice types as long as their output type is the same.
-  mergeTypes(FunctionType(tyIn, tyOut),  ChoiceType(tys, tyOut))     = ChoiceType([tyIn | tys], tyOut).
-  mergeTypes(ChoiceType(tys, tyOut),     FunctionType(tyIn, tyOut))  = ChoiceType([tyIn | tys], tyOut).
-  
-  //Merge together two choice types by reducing on the left side.
-  mergeTypes(ChoiceType([ty1, ty2], tyOut), ChoiceType(tys2, tyOut)) = ChoiceType([ty1, ty2 | tys2], tyOut).
-  mergeTypes(ChoiceType([ty1, ty2 | tys1@[_|_]], tyOut), ChoiceType(tys2, tyOut)) = mergeTypes(ChoiceType([ty2 | tys1], tyOut), ChoiceType([ty1 | tys2], tyOut)).
-  
-  
-  /**
-   * Gets all the input types of function types as a list of lists.
-   * Fails if the list contains elements that are not function types.
-   */
-  getFunctionInputTypes maps getFunctionInputType(list(*)) = list(*)
-  
-  getFunctionInputType : Type -> list(Type)
-  getFunctionInputType(FunctionType(tys, _)) = tys.
-  
-  bindInputTypesInScope maps bindInputTypeInScope(*, list(*))
-  
-  bindInputTypeInScope : scope * list(Type)
-  bindInputTypeInScope(s, tys) :-
-    s -> TypeOption{tys@tys}.
-  
-  
-  bindFunctionTypesInScope maps bindFunctionTypeInScope(*, list(*))
-  bindFunctionTypeInScope : scope * Type
-  bindFunctionTypeInScope(s, FunctionType(tysIn, tyOut)) :-
-    s -> TypeOption{tysIn@tysIn} with typeOfDecl tyOut.
-  
-  
+ 

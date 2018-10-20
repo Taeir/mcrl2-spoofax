@@ -13,6 +13,13 @@ signature
   sorts ActionDecl constructors
     ActionDecl    : ID -> ActionDecl
     ActionDeclExt : ID * List(SortExp) -> ActionDecl
+  
+  sorts SortDeclList constructors
+    SortDeclList : List(SortDecl) -> SortDeclList
+  
+  sorts SortDecl constructors
+    SortDecl      : ID -> SortDecl
+    SortDeclAlias : ID * SortExp -> SortDecl
 
 rules
   desugar = desugar-flatten
@@ -32,6 +39,7 @@ rules
     where
     varDecls := <map(\ name -> VarDecl(name, sexp) \)> names
   
+  //[TypedParams([a, b], sexp), ...] -> VarDeclList([VarDecl(a, sexp), VarDecl(b, sexp), ...])
   desugar-flatten: l@[TypedParams(_, _) | _] -> VarDeclList(varDecls)
     where
     varDecls := <mapconcat(typedparams2vardecls)> l
@@ -40,7 +48,7 @@ rules
     where
     varDecls := <map(\ name -> VarDecl(name, sexp) \)> names
   
-  //[ActionDecl([a, b])] -> [ActionDecl(a), ActionDecl(b)]
+  //[ActionDecl([a, b])] -> ActionDeclList([ActionDecl(a), ActionDecl(b)])
   desugar-flatten: l@[a | _] -> ActionDeclList(actionDecls)
     where
     <?ActionDecl(_) + ?ActionDeclExt(_, _)> a;
@@ -55,4 +63,18 @@ rules
   multactdecl2actiondecls: ActionDeclExt(names@[_|_], sexps) -> actionDecls
     where
     actionDecls := <map(\ name -> ActionDeclExt(name, sexps) \)> names
+  
+  //[SortDecls([a, b]), SortAlias(c, sexp), ...] -> SortDeclList([SortDecl(a), SortDecl(b), SortDeclAlias(c, sexp), ...]
+  desugar-flatten: l@[s | tail] -> SortDeclList(sortDecls)
+    where
+    <?SortDecls(_) + ?SortAlias(_, _)> s;
+    sortDecls := <mapconcat(multsortdecls2sortdecls)> l
+  
+  desugar-flatten = multsortdecls2sortdecls
+  
+  multsortdecls2sortdecls: SortDecls(names) -> sortDecls
+    where
+    sortDecls := <map(\ SortDeclID(name) -> SortDecl(name) \)> names
+  
+  multsortdecls2sortdecls: SortAlias(name, sexp) -> [ SortDeclAlias(name, sexp) ]
   

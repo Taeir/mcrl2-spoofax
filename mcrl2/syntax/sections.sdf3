@@ -47,17 +47,22 @@ context-free syntax
       <{VarsDeclList ";\n"}+>;
   >
   
-  Section.VarSection = <
-    var
-      <{VarsDeclList ";\n"}+>;
-  >
-  
-  //TODO Officially the var section optionally goes before the equations section
   Section.EquationsSection = <
     eqn
       <{EqnDecl "\n"}+>
   >
   
+  Section.VarEquationsSection = <
+    var
+      <{VarsDeclList ";\n"}+>;
+    eqn
+      <{EqnDecl "\n"}+>
+  >
+  
   IdsDecl.TypedParams = <<{ID ", "}+>: <SortExp>>
+
+context-free priorities
+  Section.VarEquationsSection >
+  Section.EquationsSection
   
   
