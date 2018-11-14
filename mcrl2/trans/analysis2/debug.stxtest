@@ -1,0 +1,9 @@
+resolve {n}
+  allTypesTheSame([10, 20, 10]) == n
+
+rules
+  typeTheSame : int -> int
+  allTypesTheSame maps typeTheSame(list(*)) = *
+  
+  typeTheSame(t) = t.
+ 

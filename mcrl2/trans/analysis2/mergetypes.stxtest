@@ -1,0 +1,7 @@
+resolve {n}
+  mergeTypes([10, 20, 30]) == n
+
+rules
+  mergeType : int -> int
+  mergeTypes maps mergeType(list(*)) = *
+ 

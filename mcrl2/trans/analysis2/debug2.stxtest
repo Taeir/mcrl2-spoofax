@@ -1,0 +1,8 @@
+resolve
+  b(a)
+
+//TEST for passing functions
+rules
+  a : int
+  b : occurrence
+  

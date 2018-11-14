@@ -47,7 +47,7 @@ rules
     RealType() <sub! AnyType()
     .
 
-  [[ Program(sections) ^ (programScope) ]] := Map1 [[ sections ^ (programScope) ]].
+  [[ Program(sections) ^ (programScope) ]] := Map1 [[ sections ^ (programScope) ]], false | warning $[HEY].
   
   [[ SortSection(sorts)       ^ (s) ]] := Map1 [[ sorts ^ (s) ]].
   [[ EquationsSection(eqns)   ^ (s) ]] := Map1 [[ eqns  ^ (s) ]].
@@ -57,7 +57,7 @@ rules
   [[ MapSection(maps)         ^ (s) ]] := Map1(Maps)         [[ maps ^ (s) ]].
   [[ ConstructorSection(cons) ^ (s) ]] := Map1(Constructors) [[ cons ^ (s) ]].
   
-  [[ VarSection(VarsDeclList(vars))        ^ (s) ]] := Map1(Vars)       [[ vars ^ (s) ]].
+//  [[ VarSection(VarsDeclList(vars))        ^ (s) ]] := Map1(Vars)       [[ vars ^ (s) ]].
   [[ GlobalVarsSection(VarsDeclList(vars)) ^ (s) ]] := Map1(GlobalVars) [[ vars ^ (s) ]].
   
   [[ InitSection(procExp)     ^ (s) ]] := [[ procExp ^ (s) ]].

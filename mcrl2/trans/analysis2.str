@@ -12,7 +12,7 @@ imports
 
 rules // Analysis
 
-  editor-analyze = stx-editor-analyze(desugar-all|"analysis2/mcrl2", "programOK")
+  editor-analyze = stx-editor-analyze(desugar-all|"analysis2/mcrl2_new", "programOK")
   
 rules // Editor services
   

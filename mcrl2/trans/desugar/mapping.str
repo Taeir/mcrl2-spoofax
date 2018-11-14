@@ -15,23 +15,30 @@ signature
 rules
   desugar-mapping: MapSection(VarDeclList(varDecls)) -> MapSection(MapDeclList(mapDecls))
     where
-    table := <new-hashtable>;
-    //1. collect VarDecls with the same name
-    <collect-same-name(|table)> varDecls;
-    //2. Convert hashtable to list
-    entries := <hashtable-getlist> table;
-    //3. Create MapDecls from the table
-    mapDecls := <map(convert-to-mapdecl)> entries;
-    <hashtable-destroy> table
+    mapDecls := <map(simple-var-to-map)> varDecls
   
-  collect-same-name(|table): [] -> []
-  collect-same-name(|table): [VarDecl(name, sexp) | tail] -> <collect-same-name(|table)> tail
-    with
-    if sexps := <hashtable-get(|name)> table then
-      <hashtable-put(|name, [sexp | sexps])> table
-    else
-      <hashtable-put(|name, [sexp])> table
-    end
-  
-  convert-to-mapdecl: (name, [sexp]) -> MapDecl(name, sexp)
-  convert-to-mapdecl: (name, sexps@[_ | _]) -> MapDeclExt(name, sexps)
+  simple-var-to-map: VarDecl(name, sexp) -> MapDecl(name, sexp)
+
+  //Desugaring to bundle mappings with the same name together:
+//  desugar-mapping: MapSection(VarDeclList(varDecls)) -> MapSection(MapDeclList(mapDecls))
+//    where
+//    table := <new-hashtable>;
+//    //1. collect VarDecls with the same name
+//    <collect-same-name(|table)> varDecls;
+//    //2. Convert hashtable to list
+//    entries := <hashtable-getlist> table;
+//    //3. Create MapDecls from the table
+//    mapDecls := <map(convert-to-mapdecl)> entries;
+//    <hashtable-destroy> table
+//  
+//  collect-same-name(|table): [] -> []
+//  collect-same-name(|table): [VarDecl(name, sexp) | tail] -> <collect-same-name(|table)> tail
+//    with
+//    if sexps := <hashtable-get(|name)> table then
+//      <hashtable-put(|name, [sexp | sexps])> table
+//    else
+//      <hashtable-put(|name, [sexp])> table
+//    end
+//  
+//  convert-to-mapdecl: (name, [sexp]) -> MapDecl(name, sexp)
+//  convert-to-mapdecl: (name, sexps@[_ | _]) -> MapDeclExt(name, sexps)
